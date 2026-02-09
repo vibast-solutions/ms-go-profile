@@ -5,7 +5,7 @@ COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 LDFLAGS := -X github.com/vibast-solutions/ms-go-profile/cmd.Version=$(VERSION) \
            -X github.com/vibast-solutions/ms-go-profile/cmd.Commit=$(COMMIT)
 
-.PHONY: build build-linux-arm64 build-linux-amd64 build-darwin-arm64 build-darwin-amd64 build-all clean test
+.PHONY: build build-linux-arm64 build-linux-amd64 build-darwin-arm64 build-darwin-amd64 build-all clean test e2e
 
 build:
 	@mkdir -p $(BUILD_DIR)
@@ -31,6 +31,9 @@ build-all: build build-linux-arm64 build-linux-amd64 build-darwin-arm64 build-da
 
 test:
 	go test ./...
+
+e2e:
+	./e2e/run.sh
 
 clean:
 	rm -rf $(BUILD_DIR)

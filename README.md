@@ -73,3 +73,27 @@ Generate protobuf/grpc files:
 ```bash
 ./scripts/gen_proto.sh
 ```
+
+## E2E Tests
+
+Profile includes Docker Compose based e2e tests in `profile/e2e`.
+
+Host port bindings are intentionally non-default:
+- MySQL: `23306` -> container `3306`
+- HTTP: `28080` -> container `8080`
+- gRPC: `29090` -> container `9090`
+
+Run e2e tests:
+
+```bash
+cd e2e
+docker compose up -d --build
+cd ..
+PROFILE_HTTP_URL=http://localhost:28080 PROFILE_GRPC_ADDR=localhost:29090 go test ./e2e -v -tags e2e
+```
+
+Or use:
+
+```bash
+./e2e/run.sh
+```
