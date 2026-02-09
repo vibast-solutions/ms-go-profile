@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package profile;
+
+option go_package = "github.com/vibast-solutions/ms-go-profile/app/types;types";
+
+service ProfileService {
+}
