@@ -24,6 +24,11 @@ const (
 	ProfileService_GetProfileByUserID_FullMethodName = "/profile.ProfileService/GetProfileByUserID"
 	ProfileService_UpdateProfile_FullMethodName      = "/profile.ProfileService/UpdateProfile"
 	ProfileService_DeleteProfile_FullMethodName      = "/profile.ProfileService/DeleteProfile"
+	ProfileService_CreateContact_FullMethodName      = "/profile.ProfileService/CreateContact"
+	ProfileService_GetContact_FullMethodName         = "/profile.ProfileService/GetContact"
+	ProfileService_UpdateContact_FullMethodName      = "/profile.ProfileService/UpdateContact"
+	ProfileService_DeleteContact_FullMethodName      = "/profile.ProfileService/DeleteContact"
+	ProfileService_ListContacts_FullMethodName       = "/profile.ProfileService/ListContacts"
 )
 
 // ProfileServiceClient is the client API for ProfileService service.
@@ -35,6 +40,11 @@ type ProfileServiceClient interface {
 	GetProfileByUserID(ctx context.Context, in *GetProfileByUserIDRequest, opts ...grpc.CallOption) (*ProfileResponse, error)
 	UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*ProfileResponse, error)
 	DeleteProfile(ctx context.Context, in *DeleteProfileRequest, opts ...grpc.CallOption) (*DeleteProfileResponse, error)
+	CreateContact(ctx context.Context, in *CreateContactRequest, opts ...grpc.CallOption) (*ContactResponse, error)
+	GetContact(ctx context.Context, in *GetContactRequest, opts ...grpc.CallOption) (*ContactResponse, error)
+	UpdateContact(ctx context.Context, in *UpdateContactRequest, opts ...grpc.CallOption) (*ContactResponse, error)
+	DeleteContact(ctx context.Context, in *DeleteContactRequest, opts ...grpc.CallOption) (*DeleteContactResponse, error)
+	ListContacts(ctx context.Context, in *ListContactsRequest, opts ...grpc.CallOption) (*ListContactsResponse, error)
 }
 
 type profileServiceClient struct {
@@ -90,6 +100,51 @@ func (c *profileServiceClient) DeleteProfile(ctx context.Context, in *DeleteProf
 	return out, nil
 }
 
+func (c *profileServiceClient) CreateContact(ctx context.Context, in *CreateContactRequest, opts ...grpc.CallOption) (*ContactResponse, error) {
+	out := new(ContactResponse)
+	err := c.cc.Invoke(ctx, ProfileService_CreateContact_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) GetContact(ctx context.Context, in *GetContactRequest, opts ...grpc.CallOption) (*ContactResponse, error) {
+	out := new(ContactResponse)
+	err := c.cc.Invoke(ctx, ProfileService_GetContact_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) UpdateContact(ctx context.Context, in *UpdateContactRequest, opts ...grpc.CallOption) (*ContactResponse, error) {
+	out := new(ContactResponse)
+	err := c.cc.Invoke(ctx, ProfileService_UpdateContact_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) DeleteContact(ctx context.Context, in *DeleteContactRequest, opts ...grpc.CallOption) (*DeleteContactResponse, error) {
+	out := new(DeleteContactResponse)
+	err := c.cc.Invoke(ctx, ProfileService_DeleteContact_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) ListContacts(ctx context.Context, in *ListContactsRequest, opts ...grpc.CallOption) (*ListContactsResponse, error) {
+	out := new(ListContactsResponse)
+	err := c.cc.Invoke(ctx, ProfileService_ListContacts_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProfileServiceServer is the server API for ProfileService service.
 // All implementations must embed UnimplementedProfileServiceServer
 // for forward compatibility
@@ -99,6 +154,11 @@ type ProfileServiceServer interface {
 	GetProfileByUserID(context.Context, *GetProfileByUserIDRequest) (*ProfileResponse, error)
 	UpdateProfile(context.Context, *UpdateProfileRequest) (*ProfileResponse, error)
 	DeleteProfile(context.Context, *DeleteProfileRequest) (*DeleteProfileResponse, error)
+	CreateContact(context.Context, *CreateContactRequest) (*ContactResponse, error)
+	GetContact(context.Context, *GetContactRequest) (*ContactResponse, error)
+	UpdateContact(context.Context, *UpdateContactRequest) (*ContactResponse, error)
+	DeleteContact(context.Context, *DeleteContactRequest) (*DeleteContactResponse, error)
+	ListContacts(context.Context, *ListContactsRequest) (*ListContactsResponse, error)
 	mustEmbedUnimplementedProfileServiceServer()
 }
 
@@ -120,6 +180,21 @@ func (UnimplementedProfileServiceServer) UpdateProfile(context.Context, *UpdateP
 }
 func (UnimplementedProfileServiceServer) DeleteProfile(context.Context, *DeleteProfileRequest) (*DeleteProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteProfile not implemented")
+}
+func (UnimplementedProfileServiceServer) CreateContact(context.Context, *CreateContactRequest) (*ContactResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateContact not implemented")
+}
+func (UnimplementedProfileServiceServer) GetContact(context.Context, *GetContactRequest) (*ContactResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetContact not implemented")
+}
+func (UnimplementedProfileServiceServer) UpdateContact(context.Context, *UpdateContactRequest) (*ContactResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateContact not implemented")
+}
+func (UnimplementedProfileServiceServer) DeleteContact(context.Context, *DeleteContactRequest) (*DeleteContactResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteContact not implemented")
+}
+func (UnimplementedProfileServiceServer) ListContacts(context.Context, *ListContactsRequest) (*ListContactsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListContacts not implemented")
 }
 func (UnimplementedProfileServiceServer) mustEmbedUnimplementedProfileServiceServer() {}
 
@@ -224,6 +299,96 @@ func _ProfileService_DeleteProfile_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProfileService_CreateContact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateContactRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).CreateContact(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_CreateContact_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).CreateContact(ctx, req.(*CreateContactRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_GetContact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetContactRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).GetContact(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_GetContact_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).GetContact(ctx, req.(*GetContactRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_UpdateContact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateContactRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).UpdateContact(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_UpdateContact_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).UpdateContact(ctx, req.(*UpdateContactRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_DeleteContact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteContactRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).DeleteContact(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_DeleteContact_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).DeleteContact(ctx, req.(*DeleteContactRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_ListContacts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListContactsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).ListContacts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_ListContacts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).ListContacts(ctx, req.(*ListContactsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProfileService_ServiceDesc is the grpc.ServiceDesc for ProfileService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -250,6 +415,26 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteProfile",
 			Handler:    _ProfileService_DeleteProfile_Handler,
+		},
+		{
+			MethodName: "CreateContact",
+			Handler:    _ProfileService_CreateContact_Handler,
+		},
+		{
+			MethodName: "GetContact",
+			Handler:    _ProfileService_GetContact_Handler,
+		},
+		{
+			MethodName: "UpdateContact",
+			Handler:    _ProfileService_UpdateContact_Handler,
+		},
+		{
+			MethodName: "DeleteContact",
+			Handler:    _ProfileService_DeleteContact_Handler,
+		},
+		{
+			MethodName: "ListContacts",
+			Handler:    _ProfileService_ListContacts_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

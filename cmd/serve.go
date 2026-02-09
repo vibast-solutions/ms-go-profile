@@ -66,9 +66,12 @@ func runServe(_ *cobra.Command, _ []string) {
 	profileRepo := repository.NewProfileRepository(db)
 	profileService := service.NewProfileService(profileRepo)
 	profileController := controller.NewProfileController(profileService)
+	contactRepo := repository.NewContactRepository(db)
+	contactService := service.NewContactService(contactRepo)
+	contactController := controller.NewContactController(contactService)
 
-	e := setupHTTPServer(profileController)
-	grpcServer, lis := setupGRPCServer(cfg, profileService)
+	e := setupHTTPServer(profileController, contactController)
+	grpcServer, lis := setupGRPCServer(cfg, profileService, contactService)
 
 	go func() {
 		httpAddr := net.JoinHostPort(cfg.HTTPHost, cfg.HTTPPort)
@@ -102,7 +105,7 @@ func runServe(_ *cobra.Command, _ []string) {
 }
 
 // setupHTTPServer configures the Echo HTTP server and routes.
-func setupHTTPServer(ctrl *controller.ProfileController) *echo.Echo {
+func setupHTTPServer(profileCtrl *controller.ProfileController, contactCtrl *controller.ContactController) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
 
@@ -150,17 +153,24 @@ func setupHTTPServer(ctrl *controller.ProfileController) *echo.Echo {
 	})
 
 	profiles := e.Group("/profiles")
-	profiles.POST("", ctrl.Create)
-	profiles.GET("/:id", ctrl.GetByID)
-	profiles.GET("/user/:user_id", ctrl.GetByUserID)
-	profiles.PUT("/:id", ctrl.Update)
-	profiles.DELETE("/:id", ctrl.Delete)
+	profiles.POST("", profileCtrl.Create)
+	profiles.GET("/:id", profileCtrl.GetByID)
+	profiles.GET("/user/:user_id", profileCtrl.GetByUserID)
+	profiles.PUT("/:id", profileCtrl.Update)
+	profiles.DELETE("/:id", profileCtrl.Delete)
+
+	contacts := e.Group("/contacts")
+	contacts.POST("", contactCtrl.Create)
+	contacts.GET("/:id", contactCtrl.GetByID)
+	contacts.PUT("/:id", contactCtrl.Update)
+	contacts.DELETE("/:id", contactCtrl.Delete)
+	contacts.GET("", contactCtrl.List)
 
 	return e
 }
 
 // setupGRPCServer builds the gRPC server and listener.
-func setupGRPCServer(cfg *config.Config, svc *service.ProfileService) (*grpc.Server, net.Listener) {
+func setupGRPCServer(cfg *config.Config, profileSvc *service.ProfileService, contactSvc *service.ContactService) (*grpc.Server, net.Listener) {
 	grpcAddr := net.JoinHostPort(cfg.GRPCHost, cfg.GRPCPort)
 	lis, err := net.Listen("tcp", grpcAddr)
 	if err != nil {
@@ -174,7 +184,7 @@ func setupGRPCServer(cfg *config.Config, svc *service.ProfileService) (*grpc.Ser
 			profilegrpc.LoggingInterceptor(),
 		),
 	)
-	profileServer := profilegrpc.NewProfileServer(svc)
+	profileServer := profilegrpc.NewProfileServer(profileSvc, contactSvc)
 	types.RegisterProfileServiceServer(grpcServer, profileServer)
 
 	return grpcServer, lis
