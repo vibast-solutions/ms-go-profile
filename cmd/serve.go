@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -10,7 +11,12 @@ import (
 	"syscall"
 	"time"
 
-	types "github.com/vibast-solutions/ms-go-profile/app/types"
+	"github.com/google/uuid"
+	"github.com/vibast-solutions/ms-go-profile/app/controller"
+	profilegrpc "github.com/vibast-solutions/ms-go-profile/app/grpc"
+	"github.com/vibast-solutions/ms-go-profile/app/repository"
+	"github.com/vibast-solutions/ms-go-profile/app/service"
+	"github.com/vibast-solutions/ms-go-profile/app/types"
 	"github.com/vibast-solutions/ms-go-profile/config"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -57,8 +63,12 @@ func runServe(_ *cobra.Command, _ []string) {
 		logrus.WithError(err).Fatal("Failed to ping database")
 	}
 
-	e := setupHTTPServer()
-	grpcServer, lis := setupGRPCServer(cfg)
+	profileRepo := repository.NewProfileRepository(db)
+	profileService := service.NewProfileService(profileRepo)
+	profileController := controller.NewProfileController(profileService)
+
+	e := setupHTTPServer(profileController)
+	grpcServer, lis := setupGRPCServer(cfg, profileService)
 
 	go func() {
 		httpAddr := net.JoinHostPort(cfg.HTTPHost, cfg.HTTPPort)
@@ -92,7 +102,7 @@ func runServe(_ *cobra.Command, _ []string) {
 }
 
 // setupHTTPServer configures the Echo HTTP server and routes.
-func setupHTTPServer() *echo.Echo {
+func setupHTTPServer(ctrl *controller.ProfileController) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
 
@@ -105,6 +115,7 @@ func setupHTTPServer() *echo.Echo {
 		LogUserAgent: true,
 		LogError:     true,
 		HandleError:  true,
+		LogRequestID: true,
 		LogValuesFunc: func(c echo.Context, v echomiddleware.RequestLoggerValues) error {
 			fields := logrus.Fields{
 				"remote_ip":  v.RemoteIP,
@@ -126,24 +137,45 @@ func setupHTTPServer() *echo.Echo {
 	}))
 	e.Use(echomiddleware.Recover())
 	e.Use(echomiddleware.CORS())
+	//request ID middleware used with custom generator to differentiate the request ids coming from HTTP vs request ids
+	//created by us
+	e.Use(echomiddleware.RequestIDWithConfig(echomiddleware.RequestIDConfig{
+		Generator: func() string {
+			return fmt.Sprintf("rest-%s", uuid.New().String())
+		},
+	}))
 
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(200, map[string]string{"status": "ok"})
 	})
 
+	profiles := e.Group("/profiles")
+	profiles.POST("", ctrl.Create)
+	profiles.GET("/:id", ctrl.GetByID)
+	profiles.GET("/user/:user_id", ctrl.GetByUserID)
+	profiles.PUT("/:id", ctrl.Update)
+	profiles.DELETE("/:id", ctrl.Delete)
+
 	return e
 }
 
 // setupGRPCServer builds the gRPC server and listener.
-func setupGRPCServer(cfg *config.Config) (*grpc.Server, net.Listener) {
+func setupGRPCServer(cfg *config.Config, svc *service.ProfileService) (*grpc.Server, net.Listener) {
 	grpcAddr := net.JoinHostPort(cfg.GRPCHost, cfg.GRPCPort)
 	lis, err := net.Listen("tcp", grpcAddr)
 	if err != nil {
 		logrus.WithError(err).Fatal("Failed to listen on gRPC port")
 	}
 
-	grpcServer := grpc.NewServer()
-	types.RegisterProfileServiceServer(grpcServer, &types.UnimplementedProfileServiceServer{})
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			profilegrpc.RecoveryInterceptor(),
+			profilegrpc.RequestIDInterceptor(),
+			profilegrpc.LoggingInterceptor(),
+		),
+	)
+	profileServer := profilegrpc.NewProfileServer(svc)
+	types.RegisterProfileServiceServer(grpcServer, profileServer)
 
 	return grpcServer, lis
 }

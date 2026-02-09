@@ -5,4 +5,43 @@ package profile;
 option go_package = "github.com/vibast-solutions/ms-go-profile/app/types;types";
 
 service ProfileService {
+  rpc CreateProfile(CreateProfileRequest) returns (ProfileResponse);
+  rpc GetProfile(GetProfileRequest) returns (ProfileResponse);
+  rpc GetProfileByUserID(GetProfileByUserIDRequest) returns (ProfileResponse);
+  rpc UpdateProfile(UpdateProfileRequest) returns (ProfileResponse);
+  rpc DeleteProfile(DeleteProfileRequest) returns (DeleteProfileResponse);
+}
+
+message CreateProfileRequest {
+  uint64 user_id = 1;
+  string email = 2;
+}
+
+message GetProfileRequest {
+  uint64 id = 1;
+}
+
+message GetProfileByUserIDRequest {
+  uint64 user_id = 1;
+}
+
+message UpdateProfileRequest {
+  uint64 id = 1;
+  string email = 2;
+}
+
+message DeleteProfileRequest {
+  uint64 id = 1;
+}
+
+message ProfileResponse {
+  uint64 id = 1;
+  uint64 user_id = 2;
+  string email = 3;
+  string created_at = 4;
+  string updated_at = 5;
+}
+
+message DeleteProfileResponse {
+  string message = 1;
 }
