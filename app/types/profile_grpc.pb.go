@@ -34,6 +34,11 @@ const (
 	ProfileService_UpdateAddress_FullMethodName      = "/profile.ProfileService/UpdateAddress"
 	ProfileService_DeleteAddress_FullMethodName      = "/profile.ProfileService/DeleteAddress"
 	ProfileService_ListAddresses_FullMethodName      = "/profile.ProfileService/ListAddresses"
+	ProfileService_CreateCompany_FullMethodName      = "/profile.ProfileService/CreateCompany"
+	ProfileService_GetCompany_FullMethodName         = "/profile.ProfileService/GetCompany"
+	ProfileService_UpdateCompany_FullMethodName      = "/profile.ProfileService/UpdateCompany"
+	ProfileService_DeleteCompany_FullMethodName      = "/profile.ProfileService/DeleteCompany"
+	ProfileService_ListCompanies_FullMethodName      = "/profile.ProfileService/ListCompanies"
 )
 
 // ProfileServiceClient is the client API for ProfileService service.
@@ -55,6 +60,11 @@ type ProfileServiceClient interface {
 	UpdateAddress(ctx context.Context, in *UpdateAddressRequest, opts ...grpc.CallOption) (*AddressResponse, error)
 	DeleteAddress(ctx context.Context, in *DeleteAddressRequest, opts ...grpc.CallOption) (*DeleteAddressResponse, error)
 	ListAddresses(ctx context.Context, in *ListAddressesRequest, opts ...grpc.CallOption) (*ListAddressesResponse, error)
+	CreateCompany(ctx context.Context, in *CreateCompanyRequest, opts ...grpc.CallOption) (*CompanyResponse, error)
+	GetCompany(ctx context.Context, in *GetCompanyRequest, opts ...grpc.CallOption) (*CompanyResponse, error)
+	UpdateCompany(ctx context.Context, in *UpdateCompanyRequest, opts ...grpc.CallOption) (*CompanyResponse, error)
+	DeleteCompany(ctx context.Context, in *DeleteCompanyRequest, opts ...grpc.CallOption) (*DeleteCompanyResponse, error)
+	ListCompanies(ctx context.Context, in *ListCompaniesRequest, opts ...grpc.CallOption) (*ListCompaniesResponse, error)
 }
 
 type profileServiceClient struct {
@@ -200,6 +210,51 @@ func (c *profileServiceClient) ListAddresses(ctx context.Context, in *ListAddres
 	return out, nil
 }
 
+func (c *profileServiceClient) CreateCompany(ctx context.Context, in *CreateCompanyRequest, opts ...grpc.CallOption) (*CompanyResponse, error) {
+	out := new(CompanyResponse)
+	err := c.cc.Invoke(ctx, ProfileService_CreateCompany_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) GetCompany(ctx context.Context, in *GetCompanyRequest, opts ...grpc.CallOption) (*CompanyResponse, error) {
+	out := new(CompanyResponse)
+	err := c.cc.Invoke(ctx, ProfileService_GetCompany_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) UpdateCompany(ctx context.Context, in *UpdateCompanyRequest, opts ...grpc.CallOption) (*CompanyResponse, error) {
+	out := new(CompanyResponse)
+	err := c.cc.Invoke(ctx, ProfileService_UpdateCompany_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) DeleteCompany(ctx context.Context, in *DeleteCompanyRequest, opts ...grpc.CallOption) (*DeleteCompanyResponse, error) {
+	out := new(DeleteCompanyResponse)
+	err := c.cc.Invoke(ctx, ProfileService_DeleteCompany_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) ListCompanies(ctx context.Context, in *ListCompaniesRequest, opts ...grpc.CallOption) (*ListCompaniesResponse, error) {
+	out := new(ListCompaniesResponse)
+	err := c.cc.Invoke(ctx, ProfileService_ListCompanies_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProfileServiceServer is the server API for ProfileService service.
 // All implementations must embed UnimplementedProfileServiceServer
 // for forward compatibility
@@ -219,6 +274,11 @@ type ProfileServiceServer interface {
 	UpdateAddress(context.Context, *UpdateAddressRequest) (*AddressResponse, error)
 	DeleteAddress(context.Context, *DeleteAddressRequest) (*DeleteAddressResponse, error)
 	ListAddresses(context.Context, *ListAddressesRequest) (*ListAddressesResponse, error)
+	CreateCompany(context.Context, *CreateCompanyRequest) (*CompanyResponse, error)
+	GetCompany(context.Context, *GetCompanyRequest) (*CompanyResponse, error)
+	UpdateCompany(context.Context, *UpdateCompanyRequest) (*CompanyResponse, error)
+	DeleteCompany(context.Context, *DeleteCompanyRequest) (*DeleteCompanyResponse, error)
+	ListCompanies(context.Context, *ListCompaniesRequest) (*ListCompaniesResponse, error)
 	mustEmbedUnimplementedProfileServiceServer()
 }
 
@@ -270,6 +330,21 @@ func (UnimplementedProfileServiceServer) DeleteAddress(context.Context, *DeleteA
 }
 func (UnimplementedProfileServiceServer) ListAddresses(context.Context, *ListAddressesRequest) (*ListAddressesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAddresses not implemented")
+}
+func (UnimplementedProfileServiceServer) CreateCompany(context.Context, *CreateCompanyRequest) (*CompanyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateCompany not implemented")
+}
+func (UnimplementedProfileServiceServer) GetCompany(context.Context, *GetCompanyRequest) (*CompanyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCompany not implemented")
+}
+func (UnimplementedProfileServiceServer) UpdateCompany(context.Context, *UpdateCompanyRequest) (*CompanyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateCompany not implemented")
+}
+func (UnimplementedProfileServiceServer) DeleteCompany(context.Context, *DeleteCompanyRequest) (*DeleteCompanyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteCompany not implemented")
+}
+func (UnimplementedProfileServiceServer) ListCompanies(context.Context, *ListCompaniesRequest) (*ListCompaniesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListCompanies not implemented")
 }
 func (UnimplementedProfileServiceServer) mustEmbedUnimplementedProfileServiceServer() {}
 
@@ -554,6 +629,96 @@ func _ProfileService_ListAddresses_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProfileService_CreateCompany_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateCompanyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).CreateCompany(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_CreateCompany_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).CreateCompany(ctx, req.(*CreateCompanyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_GetCompany_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCompanyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).GetCompany(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_GetCompany_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).GetCompany(ctx, req.(*GetCompanyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_UpdateCompany_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateCompanyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).UpdateCompany(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_UpdateCompany_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).UpdateCompany(ctx, req.(*UpdateCompanyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_DeleteCompany_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteCompanyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).DeleteCompany(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_DeleteCompany_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).DeleteCompany(ctx, req.(*DeleteCompanyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_ListCompanies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCompaniesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).ListCompanies(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_ListCompanies_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).ListCompanies(ctx, req.(*ListCompaniesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProfileService_ServiceDesc is the grpc.ServiceDesc for ProfileService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -620,6 +785,26 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListAddresses",
 			Handler:    _ProfileService_ListAddresses_Handler,
+		},
+		{
+			MethodName: "CreateCompany",
+			Handler:    _ProfileService_CreateCompany_Handler,
+		},
+		{
+			MethodName: "GetCompany",
+			Handler:    _ProfileService_GetCompany_Handler,
+		},
+		{
+			MethodName: "UpdateCompany",
+			Handler:    _ProfileService_UpdateCompany_Handler,
+		},
+		{
+			MethodName: "DeleteCompany",
+			Handler:    _ProfileService_DeleteCompany_Handler,
+		},
+		{
+			MethodName: "ListCompanies",
+			Handler:    _ProfileService_ListCompanies_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

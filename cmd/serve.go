@@ -72,9 +72,12 @@ func runServe(_ *cobra.Command, _ []string) {
 	addressRepo := repository.NewAddressRepository(db)
 	addressService := service.NewAddressService(addressRepo)
 	addressController := controller.NewAddressController(addressService)
+	companyRepo := repository.NewCompanyRepository(db)
+	companyService := service.NewCompanyService(companyRepo)
+	companyController := controller.NewCompanyController(companyService)
 
-	e := setupHTTPServer(profileController, contactController, addressController)
-	grpcServer, lis := setupGRPCServer(cfg, profileService, contactService, addressService)
+	e := setupHTTPServer(profileController, contactController, addressController, companyController)
+	grpcServer, lis := setupGRPCServer(cfg, profileService, contactService, addressService, companyService)
 
 	go func() {
 		httpAddr := net.JoinHostPort(cfg.HTTPHost, cfg.HTTPPort)
@@ -108,7 +111,7 @@ func runServe(_ *cobra.Command, _ []string) {
 }
 
 // setupHTTPServer configures the Echo HTTP server and routes.
-func setupHTTPServer(profileCtrl *controller.ProfileController, contactCtrl *controller.ContactController, addressCtrl *controller.AddressController) *echo.Echo {
+func setupHTTPServer(profileCtrl *controller.ProfileController, contactCtrl *controller.ContactController, addressCtrl *controller.AddressController, companyCtrl *controller.CompanyController) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
 
@@ -176,11 +179,18 @@ func setupHTTPServer(profileCtrl *controller.ProfileController, contactCtrl *con
 	addresses.DELETE("/:id", addressCtrl.Delete)
 	addresses.GET("", addressCtrl.List)
 
+	companies := e.Group("/companies")
+	companies.POST("", companyCtrl.Create)
+	companies.GET("/:id", companyCtrl.GetByID)
+	companies.PUT("/:id", companyCtrl.Update)
+	companies.DELETE("/:id", companyCtrl.Delete)
+	companies.GET("", companyCtrl.List)
+
 	return e
 }
 
 // setupGRPCServer builds the gRPC server and listener.
-func setupGRPCServer(cfg *config.Config, profileSvc *service.ProfileService, contactSvc *service.ContactService, addressSvc *service.AddressService) (*grpc.Server, net.Listener) {
+func setupGRPCServer(cfg *config.Config, profileSvc *service.ProfileService, contactSvc *service.ContactService, addressSvc *service.AddressService, companySvc *service.CompanyService) (*grpc.Server, net.Listener) {
 	grpcAddr := net.JoinHostPort(cfg.GRPCHost, cfg.GRPCPort)
 	lis, err := net.Listen("tcp", grpcAddr)
 	if err != nil {
@@ -194,7 +204,7 @@ func setupGRPCServer(cfg *config.Config, profileSvc *service.ProfileService, con
 			profilegrpc.LoggingInterceptor(),
 		),
 	)
-	profileServer := profilegrpc.NewProfileServer(profileSvc, contactSvc, addressSvc)
+	profileServer := profilegrpc.NewProfileServer(profileSvc, contactSvc, addressSvc, companySvc)
 	types.RegisterProfileServiceServer(grpcServer, profileServer)
 
 	return grpcServer, lis

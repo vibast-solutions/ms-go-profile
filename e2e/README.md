@@ -17,6 +17,12 @@ Run:
 Shortcut:
 - profile/e2e/run.sh
 
+Coverage includes cross-transport CRUD/list tests for:
+- `profiles`
+- `contacts`
+- `addresses`
+- `companies`
+
 Teardown:
 - cd profile/e2e
 - docker compose down -v
