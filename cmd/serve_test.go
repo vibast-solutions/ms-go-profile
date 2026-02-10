@@ -33,12 +33,24 @@ func (cmdContactRepoStub) List(context.Context, uint64, uint32, uint32) ([]*enti
 	return nil, 0, nil
 }
 
+type cmdAddressRepoStub struct{}
+
+func (cmdAddressRepoStub) Create(context.Context, *entity.Address) error             { return nil }
+func (cmdAddressRepoStub) FindByID(context.Context, uint64) (*entity.Address, error) { return nil, nil }
+func (cmdAddressRepoStub) Update(context.Context, *entity.Address) error             { return nil }
+func (cmdAddressRepoStub) Delete(context.Context, uint64) error                      { return nil }
+func (cmdAddressRepoStub) List(context.Context, uint64, uint32, uint32) ([]*entity.Address, uint64, error) {
+	return nil, 0, nil
+}
+
 func TestSetupHTTPServerHealthRoute(t *testing.T) {
 	profileSvc := service.NewProfileService(cmdRepoStub{})
 	profileCtrl := controller.NewProfileController(profileSvc)
 	contactSvc := service.NewContactService(cmdContactRepoStub{})
 	contactCtrl := controller.NewContactController(contactSvc)
-	e := setupHTTPServer(profileCtrl, contactCtrl)
+	addressSvc := service.NewAddressService(cmdAddressRepoStub{})
+	addressCtrl := controller.NewAddressController(addressSvc)
+	e := setupHTTPServer(profileCtrl, contactCtrl, addressCtrl)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()

@@ -29,6 +29,11 @@ const (
 	ProfileService_UpdateContact_FullMethodName      = "/profile.ProfileService/UpdateContact"
 	ProfileService_DeleteContact_FullMethodName      = "/profile.ProfileService/DeleteContact"
 	ProfileService_ListContacts_FullMethodName       = "/profile.ProfileService/ListContacts"
+	ProfileService_CreateAddress_FullMethodName      = "/profile.ProfileService/CreateAddress"
+	ProfileService_GetAddress_FullMethodName         = "/profile.ProfileService/GetAddress"
+	ProfileService_UpdateAddress_FullMethodName      = "/profile.ProfileService/UpdateAddress"
+	ProfileService_DeleteAddress_FullMethodName      = "/profile.ProfileService/DeleteAddress"
+	ProfileService_ListAddresses_FullMethodName      = "/profile.ProfileService/ListAddresses"
 )
 
 // ProfileServiceClient is the client API for ProfileService service.
@@ -45,6 +50,11 @@ type ProfileServiceClient interface {
 	UpdateContact(ctx context.Context, in *UpdateContactRequest, opts ...grpc.CallOption) (*ContactResponse, error)
 	DeleteContact(ctx context.Context, in *DeleteContactRequest, opts ...grpc.CallOption) (*DeleteContactResponse, error)
 	ListContacts(ctx context.Context, in *ListContactsRequest, opts ...grpc.CallOption) (*ListContactsResponse, error)
+	CreateAddress(ctx context.Context, in *CreateAddressRequest, opts ...grpc.CallOption) (*AddressResponse, error)
+	GetAddress(ctx context.Context, in *GetAddressRequest, opts ...grpc.CallOption) (*AddressResponse, error)
+	UpdateAddress(ctx context.Context, in *UpdateAddressRequest, opts ...grpc.CallOption) (*AddressResponse, error)
+	DeleteAddress(ctx context.Context, in *DeleteAddressRequest, opts ...grpc.CallOption) (*DeleteAddressResponse, error)
+	ListAddresses(ctx context.Context, in *ListAddressesRequest, opts ...grpc.CallOption) (*ListAddressesResponse, error)
 }
 
 type profileServiceClient struct {
@@ -145,6 +155,51 @@ func (c *profileServiceClient) ListContacts(ctx context.Context, in *ListContact
 	return out, nil
 }
 
+func (c *profileServiceClient) CreateAddress(ctx context.Context, in *CreateAddressRequest, opts ...grpc.CallOption) (*AddressResponse, error) {
+	out := new(AddressResponse)
+	err := c.cc.Invoke(ctx, ProfileService_CreateAddress_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) GetAddress(ctx context.Context, in *GetAddressRequest, opts ...grpc.CallOption) (*AddressResponse, error) {
+	out := new(AddressResponse)
+	err := c.cc.Invoke(ctx, ProfileService_GetAddress_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) UpdateAddress(ctx context.Context, in *UpdateAddressRequest, opts ...grpc.CallOption) (*AddressResponse, error) {
+	out := new(AddressResponse)
+	err := c.cc.Invoke(ctx, ProfileService_UpdateAddress_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) DeleteAddress(ctx context.Context, in *DeleteAddressRequest, opts ...grpc.CallOption) (*DeleteAddressResponse, error) {
+	out := new(DeleteAddressResponse)
+	err := c.cc.Invoke(ctx, ProfileService_DeleteAddress_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) ListAddresses(ctx context.Context, in *ListAddressesRequest, opts ...grpc.CallOption) (*ListAddressesResponse, error) {
+	out := new(ListAddressesResponse)
+	err := c.cc.Invoke(ctx, ProfileService_ListAddresses_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProfileServiceServer is the server API for ProfileService service.
 // All implementations must embed UnimplementedProfileServiceServer
 // for forward compatibility
@@ -159,6 +214,11 @@ type ProfileServiceServer interface {
 	UpdateContact(context.Context, *UpdateContactRequest) (*ContactResponse, error)
 	DeleteContact(context.Context, *DeleteContactRequest) (*DeleteContactResponse, error)
 	ListContacts(context.Context, *ListContactsRequest) (*ListContactsResponse, error)
+	CreateAddress(context.Context, *CreateAddressRequest) (*AddressResponse, error)
+	GetAddress(context.Context, *GetAddressRequest) (*AddressResponse, error)
+	UpdateAddress(context.Context, *UpdateAddressRequest) (*AddressResponse, error)
+	DeleteAddress(context.Context, *DeleteAddressRequest) (*DeleteAddressResponse, error)
+	ListAddresses(context.Context, *ListAddressesRequest) (*ListAddressesResponse, error)
 	mustEmbedUnimplementedProfileServiceServer()
 }
 
@@ -195,6 +255,21 @@ func (UnimplementedProfileServiceServer) DeleteContact(context.Context, *DeleteC
 }
 func (UnimplementedProfileServiceServer) ListContacts(context.Context, *ListContactsRequest) (*ListContactsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListContacts not implemented")
+}
+func (UnimplementedProfileServiceServer) CreateAddress(context.Context, *CreateAddressRequest) (*AddressResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateAddress not implemented")
+}
+func (UnimplementedProfileServiceServer) GetAddress(context.Context, *GetAddressRequest) (*AddressResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAddress not implemented")
+}
+func (UnimplementedProfileServiceServer) UpdateAddress(context.Context, *UpdateAddressRequest) (*AddressResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateAddress not implemented")
+}
+func (UnimplementedProfileServiceServer) DeleteAddress(context.Context, *DeleteAddressRequest) (*DeleteAddressResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAddress not implemented")
+}
+func (UnimplementedProfileServiceServer) ListAddresses(context.Context, *ListAddressesRequest) (*ListAddressesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAddresses not implemented")
 }
 func (UnimplementedProfileServiceServer) mustEmbedUnimplementedProfileServiceServer() {}
 
@@ -389,6 +464,96 @@ func _ProfileService_ListContacts_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProfileService_CreateAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAddressRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).CreateAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_CreateAddress_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).CreateAddress(ctx, req.(*CreateAddressRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_GetAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAddressRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).GetAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_GetAddress_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).GetAddress(ctx, req.(*GetAddressRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_UpdateAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateAddressRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).UpdateAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_UpdateAddress_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).UpdateAddress(ctx, req.(*UpdateAddressRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_DeleteAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAddressRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).DeleteAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_DeleteAddress_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).DeleteAddress(ctx, req.(*DeleteAddressRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_ListAddresses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAddressesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).ListAddresses(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_ListAddresses_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).ListAddresses(ctx, req.(*ListAddressesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProfileService_ServiceDesc is the grpc.ServiceDesc for ProfileService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -435,6 +600,26 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListContacts",
 			Handler:    _ProfileService_ListContacts_Handler,
+		},
+		{
+			MethodName: "CreateAddress",
+			Handler:    _ProfileService_CreateAddress_Handler,
+		},
+		{
+			MethodName: "GetAddress",
+			Handler:    _ProfileService_GetAddress_Handler,
+		},
+		{
+			MethodName: "UpdateAddress",
+			Handler:    _ProfileService_UpdateAddress_Handler,
+		},
+		{
+			MethodName: "DeleteAddress",
+			Handler:    _ProfileService_DeleteAddress_Handler,
+		},
+		{
+			MethodName: "ListAddresses",
+			Handler:    _ProfileService_ListAddresses_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -29,6 +29,14 @@ type grpcContactRepoStub struct {
 	listFn     func(ctx context.Context, profileID uint64, limit, offset uint32) ([]*entity.Contact, uint64, error)
 }
 
+type grpcAddressRepoStub struct {
+	createFn   func(ctx context.Context, address *entity.Address) error
+	findByIDFn func(ctx context.Context, id uint64) (*entity.Address, error)
+	updateFn   func(ctx context.Context, address *entity.Address) error
+	deleteFn   func(ctx context.Context, id uint64) error
+	listFn     func(ctx context.Context, profileID uint64, limit, offset uint32) ([]*entity.Address, uint64, error)
+}
+
 func (s *grpcRepoStub) Create(ctx context.Context, profile *entity.Profile) error {
 	if s.createFn != nil {
 		return s.createFn(ctx, profile)
@@ -99,16 +107,60 @@ func (s *grpcContactRepoStub) List(ctx context.Context, profileID uint64, limit,
 	return nil, 0, nil
 }
 
+func (s *grpcAddressRepoStub) Create(ctx context.Context, address *entity.Address) error {
+	if s.createFn != nil {
+		return s.createFn(ctx, address)
+	}
+	return nil
+}
+
+func (s *grpcAddressRepoStub) FindByID(ctx context.Context, id uint64) (*entity.Address, error) {
+	if s.findByIDFn != nil {
+		return s.findByIDFn(ctx, id)
+	}
+	return nil, nil
+}
+
+func (s *grpcAddressRepoStub) Update(ctx context.Context, address *entity.Address) error {
+	if s.updateFn != nil {
+		return s.updateFn(ctx, address)
+	}
+	return nil
+}
+
+func (s *grpcAddressRepoStub) Delete(ctx context.Context, id uint64) error {
+	if s.deleteFn != nil {
+		return s.deleteFn(ctx, id)
+	}
+	return nil
+}
+
+func (s *grpcAddressRepoStub) List(ctx context.Context, profileID uint64, limit, offset uint32) ([]*entity.Address, uint64, error) {
+	if s.listFn != nil {
+		return s.listFn(ctx, profileID, limit, offset)
+	}
+	return nil, 0, nil
+}
+
 func newGRPCServerWithRepo(repo *grpcRepoStub) *ProfileServer {
 	profileSvc := service.NewProfileService(repo)
 	contactSvc := service.NewContactService(&grpcContactRepoStub{})
-	return NewProfileServer(profileSvc, contactSvc)
+	addressSvc := service.NewAddressService(&grpcAddressRepoStub{})
+	return NewProfileServer(profileSvc, contactSvc, addressSvc)
 }
 
 func newGRPCServerWithContactRepo(repo *grpcContactRepoStub) *ProfileServer {
 	profileSvc := service.NewProfileService(&grpcRepoStub{})
 	contactSvc := service.NewContactService(repo)
-	return NewProfileServer(profileSvc, contactSvc)
+	addressSvc := service.NewAddressService(&grpcAddressRepoStub{})
+	return NewProfileServer(profileSvc, contactSvc, addressSvc)
+}
+
+func newGRPCServerWithAddressRepo(repo *grpcAddressRepoStub) *ProfileServer {
+	profileSvc := service.NewProfileService(&grpcRepoStub{})
+	contactSvc := service.NewContactService(&grpcContactRepoStub{})
+	addressSvc := service.NewAddressService(repo)
+	return NewProfileServer(profileSvc, contactSvc, addressSvc)
 }
 
 func TestCreateProfileInvalidArgument(t *testing.T) {
@@ -418,6 +470,79 @@ func TestListContactsSuccess(t *testing.T) {
 		t.Fatalf("expected no error, got: %v", err)
 	}
 	if resp.GetTotal() != 1 || len(resp.GetContacts()) != 1 {
+		t.Fatalf("unexpected list response: %+v", resp)
+	}
+}
+
+func TestCreateAddressInvalidArgument(t *testing.T) {
+	server := newGRPCServerWithAddressRepo(&grpcAddressRepoStub{})
+	_, err := server.CreateAddress(context.Background(), &types.CreateAddressRequest{})
+	if status.Code(err) != codes.InvalidArgument {
+		t.Fatalf("expected codes.InvalidArgument, got %s", status.Code(err))
+	}
+}
+
+func TestCreateAddressSuccess(t *testing.T) {
+	server := newGRPCServerWithAddressRepo(&grpcAddressRepoStub{
+		createFn: func(_ context.Context, address *entity.Address) error {
+			address.ID = 55
+			return nil
+		},
+	})
+
+	resp, err := server.CreateAddress(context.Background(), &types.CreateAddressRequest{
+		StreetName: "Street",
+		StreenNo:   "10",
+		City:       "City",
+		County:     "County",
+		Country:    "Country",
+		ProfileId:  9,
+	})
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+	if resp.GetId() != 55 {
+		t.Fatalf("expected id 55, got %d", resp.GetId())
+	}
+}
+
+func TestGetAddressNotFound(t *testing.T) {
+	server := newGRPCServerWithAddressRepo(&grpcAddressRepoStub{})
+	_, err := server.GetAddress(context.Background(), &types.GetAddressRequest{Id: 5})
+	if status.Code(err) != codes.NotFound {
+		t.Fatalf("expected codes.NotFound, got %s", status.Code(err))
+	}
+}
+
+func TestListAddressesSuccess(t *testing.T) {
+	server := newGRPCServerWithAddressRepo(&grpcAddressRepoStub{
+		listFn: func(_ context.Context, profileID uint64, limit, offset uint32) ([]*entity.Address, uint64, error) {
+			if profileID != 9 || limit != 10 || offset != 0 {
+				t.Fatalf("unexpected list args profileID=%d limit=%d offset=%d", profileID, limit, offset)
+			}
+			return []*entity.Address{
+				{
+					ID:         1,
+					StreetName: "Street",
+					StreenNo:   "10",
+					City:       "City",
+					County:     "County",
+					Country:    "Country",
+					ProfileID:  9,
+				},
+			}, 1, nil
+		},
+	})
+
+	resp, err := server.ListAddresses(context.Background(), &types.ListAddressesRequest{
+		ProfileId: 9,
+		Page:      1,
+		PageSize:  10,
+	})
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+	if resp.GetTotal() != 1 || len(resp.GetAddresses()) != 1 {
 		t.Fatalf("unexpected list response: %+v", resp)
 	}
 }

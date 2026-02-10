@@ -25,3 +25,22 @@ CREATE TABLE contacts (
     INDEX idx_contacts_profile_id (profile_id),
     CONSTRAINT fk_contacts_profile_id FOREIGN KEY (profile_id) REFERENCES profile(id) ON DELETE CASCADE
 );
+
+CREATE TABLE addresses (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    street_name VARCHAR(255) NOT NULL,
+    streen_no VARCHAR(128) NOT NULL,
+    city VARCHAR(255) NOT NULL,
+    county VARCHAR(255) NOT NULL,
+    country VARCHAR(255) NOT NULL,
+    profile_id BIGINT UNSIGNED NOT NULL,
+    postal_code VARCHAR(64) NOT NULL DEFAULT '',
+    building VARCHAR(128) NOT NULL DEFAULT '',
+    apartment VARCHAR(128) NOT NULL DEFAULT '',
+    additional_data VARCHAR(512) NOT NULL DEFAULT '',
+    `type` VARCHAR(255) NOT NULL DEFAULT '',
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    INDEX idx_addresses_profile_id (profile_id),
+    CONSTRAINT fk_addresses_profile_id FOREIGN KEY (profile_id) REFERENCES profile(id) ON DELETE CASCADE
+);

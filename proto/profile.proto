@@ -16,6 +16,12 @@ service ProfileService {
   rpc UpdateContact(UpdateContactRequest) returns (ContactResponse);
   rpc DeleteContact(DeleteContactRequest) returns (DeleteContactResponse);
   rpc ListContacts(ListContactsRequest) returns (ListContactsResponse);
+
+  rpc CreateAddress(CreateAddressRequest) returns (AddressResponse);
+  rpc GetAddress(GetAddressRequest) returns (AddressResponse);
+  rpc UpdateAddress(UpdateAddressRequest) returns (AddressResponse);
+  rpc DeleteAddress(DeleteAddressRequest) returns (DeleteAddressResponse);
+  rpc ListAddresses(ListAddressesRequest) returns (ListAddressesResponse);
 }
 
 message CreateProfileRequest {
@@ -106,6 +112,77 @@ message DeleteContactResponse {
 
 message ListContactsResponse {
   repeated ContactResponse contacts = 1;
+  uint32 page = 2;
+  uint32 page_size = 3;
+  uint64 total = 4;
+}
+
+message CreateAddressRequest {
+  string street_name = 1;
+  string streen_no = 2;
+  string city = 3;
+  string county = 4;
+  string country = 5;
+  uint64 profile_id = 6;
+  string postal_code = 7;
+  string building = 8;
+  string apartment = 9;
+  string additional_data = 10;
+  string type = 11;
+}
+
+message GetAddressRequest {
+  uint64 id = 1;
+}
+
+message UpdateAddressRequest {
+  uint64 id = 1;
+  string street_name = 2;
+  string streen_no = 3;
+  string city = 4;
+  string county = 5;
+  string country = 6;
+  uint64 profile_id = 7;
+  string postal_code = 8;
+  string building = 9;
+  string apartment = 10;
+  string additional_data = 11;
+  string type = 12;
+}
+
+message DeleteAddressRequest {
+  uint64 id = 1;
+}
+
+message ListAddressesRequest {
+  uint64 profile_id = 1;
+  uint32 page = 2;
+  uint32 page_size = 3;
+}
+
+message AddressResponse {
+  uint64 id = 1;
+  string street_name = 2;
+  string streen_no = 3;
+  string city = 4;
+  string county = 5;
+  string country = 6;
+  uint64 profile_id = 7;
+  string postal_code = 8;
+  string building = 9;
+  string apartment = 10;
+  string additional_data = 11;
+  string type = 12;
+  string created_at = 13;
+  string updated_at = 14;
+}
+
+message DeleteAddressResponse {
+  string message = 1;
+}
+
+message ListAddressesResponse {
+  repeated AddressResponse addresses = 1;
   uint32 page = 2;
   uint32 page_size = 3;
   uint64 total = 4;

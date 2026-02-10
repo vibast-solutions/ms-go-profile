@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/vibast-solutions/ms-go-profile/app/entity"
 	"github.com/vibast-solutions/ms-go-profile/app/service"
 	"github.com/vibast-solutions/ms-go-profile/app/types"
 
@@ -16,14 +17,16 @@ type ProfileServer struct {
 	types.UnimplementedProfileServiceServer
 	profileService *service.ProfileService
 	contactService *service.ContactService
+	addressService *service.AddressService
 }
 
 const grpcContactDOBLayout = "2006-01-02"
 
-func NewProfileServer(profileService *service.ProfileService, contactService *service.ContactService) *ProfileServer {
+func NewProfileServer(profileService *service.ProfileService, contactService *service.ContactService, addressService *service.AddressService) *ProfileServer {
 	return &ProfileServer{
 		profileService: profileService,
 		contactService: contactService,
+		addressService: addressService,
 	}
 }
 
@@ -316,6 +319,136 @@ func (s *ProfileServer) ListContacts(ctx context.Context, pbReq *types.ListConta
 		PageSize: result.PageSize,
 		Total:    result.Total,
 	}, nil
+}
+
+func (s *ProfileServer) CreateAddress(ctx context.Context, pbReq *types.CreateAddressRequest) (*types.AddressResponse, error) {
+	l := loggerWithContext(ctx)
+	if err := pbReq.Validate(); err != nil {
+		l.WithField("profile_id", pbReq.GetProfileId()).Debug("Create address validation failed (grpc)")
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	l.WithField("profile_id", pbReq.GetProfileId()).Info("Create address request received (grpc)")
+	address, err := s.addressService.Create(ctx, pbReq)
+	if err != nil {
+		l.WithError(err).WithField("profile_id", pbReq.GetProfileId()).Error("Create address failed (grpc)")
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	l.WithField("address_id", address.ID).Info("Address created (grpc)")
+	return toAddressResponse(address), nil
+}
+
+func (s *ProfileServer) GetAddress(ctx context.Context, pbReq *types.GetAddressRequest) (*types.AddressResponse, error) {
+	l := loggerWithContext(ctx)
+	if err := pbReq.Validate(); err != nil {
+		l.Debug("Get address validation failed (grpc)")
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	l.WithField("address_id", pbReq.GetId()).Info("Get address request received (grpc)")
+	address, err := s.addressService.GetByID(ctx, pbReq.GetId())
+	if err != nil {
+		if errors.Is(err, service.ErrAddressNotFound) {
+			return nil, status.Error(codes.NotFound, "address not found")
+		}
+		l.WithError(err).WithField("address_id", pbReq.GetId()).Error("Get address failed (grpc)")
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	return toAddressResponse(address), nil
+}
+
+func (s *ProfileServer) UpdateAddress(ctx context.Context, pbReq *types.UpdateAddressRequest) (*types.AddressResponse, error) {
+	l := loggerWithContext(ctx)
+	if err := pbReq.Validate(); err != nil {
+		l.Debug("Update address validation failed (grpc)")
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	l.WithField("address_id", pbReq.GetId()).Info("Update address request received (grpc)")
+	address, err := s.addressService.Update(ctx, pbReq)
+	if err != nil {
+		if errors.Is(err, service.ErrAddressNotFound) {
+			return nil, status.Error(codes.NotFound, "address not found")
+		}
+		l.WithError(err).WithField("address_id", pbReq.GetId()).Error("Update address failed (grpc)")
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	l.WithField("address_id", pbReq.GetId()).Info("Address updated (grpc)")
+	return toAddressResponse(address), nil
+}
+
+func (s *ProfileServer) DeleteAddress(ctx context.Context, pbReq *types.DeleteAddressRequest) (*types.DeleteAddressResponse, error) {
+	l := loggerWithContext(ctx)
+	if err := pbReq.Validate(); err != nil {
+		l.Debug("Delete address validation failed (grpc)")
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	l.WithField("address_id", pbReq.GetId()).Info("Delete address request received (grpc)")
+	if err := s.addressService.Delete(ctx, pbReq.GetId()); err != nil {
+		if errors.Is(err, service.ErrAddressNotFound) {
+			return nil, status.Error(codes.NotFound, "address not found")
+		}
+		l.WithError(err).WithField("address_id", pbReq.GetId()).Error("Delete address failed (grpc)")
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	l.WithField("address_id", pbReq.GetId()).Info("Address deleted (grpc)")
+	return &types.DeleteAddressResponse{Message: "address deleted successfully"}, nil
+}
+
+func (s *ProfileServer) ListAddresses(ctx context.Context, pbReq *types.ListAddressesRequest) (*types.ListAddressesResponse, error) {
+	l := loggerWithContext(ctx)
+	if err := pbReq.Validate(); err != nil {
+		l.Debug("List addresses validation failed (grpc)")
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	l.WithFields(map[string]interface{}{
+		"profile_id": pbReq.GetProfileId(),
+		"page":       pbReq.GetPage(),
+		"page_size":  pbReq.GetPageSize(),
+	}).Info("List addresses request received (grpc)")
+
+	result, err := s.addressService.List(ctx, pbReq)
+	if err != nil {
+		l.WithError(err).Error("List addresses failed (grpc)")
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	addresses := make([]*types.AddressResponse, 0, len(result.Addresses))
+	for _, address := range result.Addresses {
+		addresses = append(addresses, toAddressResponse(address))
+	}
+
+	return &types.ListAddressesResponse{
+		Addresses: addresses,
+		Page:      result.Page,
+		PageSize:  result.PageSize,
+		Total:     result.Total,
+	}, nil
+}
+
+func toAddressResponse(address *entity.Address) *types.AddressResponse {
+	return &types.AddressResponse{
+		Id:             address.ID,
+		StreetName:     address.StreetName,
+		StreenNo:       address.StreenNo,
+		City:           address.City,
+		County:         address.County,
+		Country:        address.Country,
+		ProfileId:      address.ProfileID,
+		PostalCode:     address.PostalCode,
+		Building:       address.Building,
+		Apartment:      address.Apartment,
+		AdditionalData: address.AdditionalData,
+		Type:           address.Type,
+		CreatedAt:      address.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:      address.UpdatedAt.Format(time.RFC3339),
+	}
 }
 
 func contactDOBString(dob *time.Time) string {
