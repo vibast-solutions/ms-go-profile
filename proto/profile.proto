@@ -22,6 +22,12 @@ service ProfileService {
   rpc UpdateAddress(UpdateAddressRequest) returns (AddressResponse);
   rpc DeleteAddress(DeleteAddressRequest) returns (DeleteAddressResponse);
   rpc ListAddresses(ListAddressesRequest) returns (ListAddressesResponse);
+
+  rpc CreateCompany(CreateCompanyRequest) returns (CompanyResponse);
+  rpc GetCompany(GetCompanyRequest) returns (CompanyResponse);
+  rpc UpdateCompany(UpdateCompanyRequest) returns (CompanyResponse);
+  rpc DeleteCompany(DeleteCompanyRequest) returns (DeleteCompanyResponse);
+  rpc ListCompanies(ListCompaniesRequest) returns (ListCompaniesResponse);
 }
 
 message CreateProfileRequest {
@@ -185,6 +191,60 @@ message DeleteAddressResponse {
 
 message ListAddressesResponse {
   repeated AddressResponse addresses = 1;
+  uint32 page = 2;
+  uint32 page_size = 3;
+  uint64 total = 4;
+}
+
+message CreateCompanyRequest {
+  string name = 1;
+  string registration_no = 2;
+  string fiscal_code = 3;
+  uint64 profile_id = 4;
+  string type = 5;
+}
+
+message GetCompanyRequest {
+  uint64 id = 1;
+}
+
+message UpdateCompanyRequest {
+  uint64 id = 1;
+  string name = 2;
+  string registration_no = 3;
+  string fiscal_code = 4;
+  uint64 profile_id = 5;
+  string type = 6;
+}
+
+message DeleteCompanyRequest {
+  uint64 id = 1;
+}
+
+message CompanyResponse {
+  uint64 id = 1;
+  string name = 2;
+  string registration_no = 3;
+  string fiscal_code = 4;
+  uint64 profile_id = 5;
+  string type = 6;
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+message DeleteCompanyResponse {
+  string message = 1;
+}
+
+message ListCompaniesRequest {
+  uint64 profile_id = 1;
+  uint32 page = 2;
+  uint32 page_size = 3;
+  string type = 4;
+}
+
+message ListCompaniesResponse {
+  repeated CompanyResponse companies = 1;
   uint32 page = 2;
   uint32 page_size = 3;
   uint64 total = 4;

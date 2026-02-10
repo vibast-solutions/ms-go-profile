@@ -43,6 +43,16 @@ func (cmdAddressRepoStub) List(context.Context, uint64, string, uint32, uint32) 
 	return nil, 0, nil
 }
 
+type cmdCompanyRepoStub struct{}
+
+func (cmdCompanyRepoStub) Create(context.Context, *entity.Company) error             { return nil }
+func (cmdCompanyRepoStub) FindByID(context.Context, uint64) (*entity.Company, error) { return nil, nil }
+func (cmdCompanyRepoStub) Update(context.Context, *entity.Company) error             { return nil }
+func (cmdCompanyRepoStub) Delete(context.Context, uint64) error                      { return nil }
+func (cmdCompanyRepoStub) List(context.Context, uint64, string, uint32, uint32) ([]*entity.Company, uint64, error) {
+	return nil, 0, nil
+}
+
 func TestSetupHTTPServerHealthRoute(t *testing.T) {
 	profileSvc := service.NewProfileService(cmdRepoStub{})
 	profileCtrl := controller.NewProfileController(profileSvc)
@@ -50,7 +60,9 @@ func TestSetupHTTPServerHealthRoute(t *testing.T) {
 	contactCtrl := controller.NewContactController(contactSvc)
 	addressSvc := service.NewAddressService(cmdAddressRepoStub{})
 	addressCtrl := controller.NewAddressController(addressSvc)
-	e := setupHTTPServer(profileCtrl, contactCtrl, addressCtrl)
+	companySvc := service.NewCompanyService(cmdCompanyRepoStub{})
+	companyCtrl := controller.NewCompanyController(companySvc)
+	e := setupHTTPServer(profileCtrl, contactCtrl, addressCtrl, companyCtrl)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()

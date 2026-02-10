@@ -37,6 +37,14 @@ type grpcAddressRepoStub struct {
 	listFn     func(ctx context.Context, profileID uint64, addressType string, limit, offset uint32) ([]*entity.Address, uint64, error)
 }
 
+type grpcCompanyRepoStub struct {
+	createFn   func(ctx context.Context, company *entity.Company) error
+	findByIDFn func(ctx context.Context, id uint64) (*entity.Company, error)
+	updateFn   func(ctx context.Context, company *entity.Company) error
+	deleteFn   func(ctx context.Context, id uint64) error
+	listFn     func(ctx context.Context, profileID uint64, companyType string, limit, offset uint32) ([]*entity.Company, uint64, error)
+}
+
 func (s *grpcRepoStub) Create(ctx context.Context, profile *entity.Profile) error {
 	if s.createFn != nil {
 		return s.createFn(ctx, profile)
@@ -142,25 +150,71 @@ func (s *grpcAddressRepoStub) List(ctx context.Context, profileID uint64, addres
 	return nil, 0, nil
 }
 
+func (s *grpcCompanyRepoStub) Create(ctx context.Context, company *entity.Company) error {
+	if s.createFn != nil {
+		return s.createFn(ctx, company)
+	}
+	return nil
+}
+
+func (s *grpcCompanyRepoStub) FindByID(ctx context.Context, id uint64) (*entity.Company, error) {
+	if s.findByIDFn != nil {
+		return s.findByIDFn(ctx, id)
+	}
+	return nil, nil
+}
+
+func (s *grpcCompanyRepoStub) Update(ctx context.Context, company *entity.Company) error {
+	if s.updateFn != nil {
+		return s.updateFn(ctx, company)
+	}
+	return nil
+}
+
+func (s *grpcCompanyRepoStub) Delete(ctx context.Context, id uint64) error {
+	if s.deleteFn != nil {
+		return s.deleteFn(ctx, id)
+	}
+	return nil
+}
+
+func (s *grpcCompanyRepoStub) List(ctx context.Context, profileID uint64, companyType string, limit, offset uint32) ([]*entity.Company, uint64, error) {
+	if s.listFn != nil {
+		return s.listFn(ctx, profileID, companyType, limit, offset)
+	}
+	return nil, 0, nil
+}
+
 func newGRPCServerWithRepo(repo *grpcRepoStub) *ProfileServer {
 	profileSvc := service.NewProfileService(repo)
 	contactSvc := service.NewContactService(&grpcContactRepoStub{})
 	addressSvc := service.NewAddressService(&grpcAddressRepoStub{})
-	return NewProfileServer(profileSvc, contactSvc, addressSvc)
+	companySvc := service.NewCompanyService(&grpcCompanyRepoStub{})
+	return NewProfileServer(profileSvc, contactSvc, addressSvc, companySvc)
 }
 
 func newGRPCServerWithContactRepo(repo *grpcContactRepoStub) *ProfileServer {
 	profileSvc := service.NewProfileService(&grpcRepoStub{})
 	contactSvc := service.NewContactService(repo)
 	addressSvc := service.NewAddressService(&grpcAddressRepoStub{})
-	return NewProfileServer(profileSvc, contactSvc, addressSvc)
+	companySvc := service.NewCompanyService(&grpcCompanyRepoStub{})
+	return NewProfileServer(profileSvc, contactSvc, addressSvc, companySvc)
 }
 
 func newGRPCServerWithAddressRepo(repo *grpcAddressRepoStub) *ProfileServer {
 	profileSvc := service.NewProfileService(&grpcRepoStub{})
 	contactSvc := service.NewContactService(&grpcContactRepoStub{})
 	addressSvc := service.NewAddressService(repo)
-	return NewProfileServer(profileSvc, contactSvc, addressSvc)
+	companySvc := service.NewCompanyService(&grpcCompanyRepoStub{})
+	return NewProfileServer(profileSvc, contactSvc, addressSvc, companySvc)
+}
+
+func newGRPCServerWithCompanyRepo(repo *grpcCompanyRepoStub) *ProfileServer {
+	profileSvc := service.NewProfileService(&grpcRepoStub{})
+	contactSvc := service.NewContactService(&grpcContactRepoStub{})
+	addressSvc := service.NewAddressService(&grpcAddressRepoStub{})
+	companySvc := service.NewCompanyService(repo)
+	return NewProfileServer(profileSvc, contactSvc, addressSvc, companySvc)
 }
 
 func TestCreateProfileInvalidArgument(t *testing.T) {
@@ -545,6 +599,76 @@ func TestListAddressesSuccess(t *testing.T) {
 		t.Fatalf("expected no error, got: %v", err)
 	}
 	if resp.GetTotal() != 1 || len(resp.GetAddresses()) != 1 {
+		t.Fatalf("unexpected list response: %+v", resp)
+	}
+}
+
+func TestCreateCompanyInvalidArgument(t *testing.T) {
+	server := newGRPCServerWithCompanyRepo(&grpcCompanyRepoStub{})
+	_, err := server.CreateCompany(context.Background(), &types.CreateCompanyRequest{})
+	if status.Code(err) != codes.InvalidArgument {
+		t.Fatalf("expected codes.InvalidArgument, got %s", status.Code(err))
+	}
+}
+
+func TestCreateCompanySuccess(t *testing.T) {
+	server := newGRPCServerWithCompanyRepo(&grpcCompanyRepoStub{
+		createFn: func(_ context.Context, company *entity.Company) error {
+			company.ID = 33
+			return nil
+		},
+	})
+
+	resp, err := server.CreateCompany(context.Background(), &types.CreateCompanyRequest{
+		Name:           "ACME",
+		RegistrationNo: "REG-1",
+		FiscalCode:     "FISC-1",
+		ProfileId:      9,
+	})
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+	if resp.GetId() != 33 {
+		t.Fatalf("expected id 33, got %d", resp.GetId())
+	}
+}
+
+func TestGetCompanyNotFound(t *testing.T) {
+	server := newGRPCServerWithCompanyRepo(&grpcCompanyRepoStub{})
+	_, err := server.GetCompany(context.Background(), &types.GetCompanyRequest{Id: 5})
+	if status.Code(err) != codes.NotFound {
+		t.Fatalf("expected codes.NotFound, got %s", status.Code(err))
+	}
+}
+
+func TestListCompaniesSuccess(t *testing.T) {
+	server := newGRPCServerWithCompanyRepo(&grpcCompanyRepoStub{
+		listFn: func(_ context.Context, profileID uint64, companyType string, limit, offset uint32) ([]*entity.Company, uint64, error) {
+			if profileID != 9 || companyType != "vendor" || limit != 10 || offset != 0 {
+				t.Fatalf("unexpected list args profileID=%d companyType=%q limit=%d offset=%d", profileID, companyType, limit, offset)
+			}
+			return []*entity.Company{
+				{
+					ID:             1,
+					Name:           "ACME",
+					RegistrationNo: "REG-1",
+					FiscalCode:     "FISC-1",
+					ProfileID:      9,
+				},
+			}, 1, nil
+		},
+	})
+
+	resp, err := server.ListCompanies(context.Background(), &types.ListCompaniesRequest{
+		ProfileId: 9,
+		Page:      1,
+		PageSize:  10,
+		Type:      "vendor",
+	})
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+	if resp.GetTotal() != 1 || len(resp.GetCompanies()) != 1 {
 		t.Fatalf("unexpected list response: %+v", resp)
 	}
 }

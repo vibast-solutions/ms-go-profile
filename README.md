@@ -96,6 +96,18 @@ Address request fields:
 - Mandatory: `street_name`, `streen_no`, `city`, `county`, `country`, `profile_id`
 - Optional: `postal_code`, `building`, `apartment`, `additional_data` (max 512), `type`
 
+### Companies
+
+- `POST /companies`
+- `GET /companies/:id`
+- `PUT /companies/:id`
+- `DELETE /companies/:id`
+- `GET /companies?profile_id=<id>&page=<n>&page_size=<n>&type=<type>`
+
+Company request fields:
+- Mandatory: `name`, `registration_no`, `fiscal_code`, `profile_id`
+- Optional: `type`
+
 ## gRPC
 
 Generate protobuf/grpc files:
@@ -109,10 +121,11 @@ Service methods:
 - Profile: `CreateProfile`, `GetProfile`, `GetProfileByUserID`, `UpdateProfile`, `DeleteProfile`
 - Contact: `CreateContact`, `GetContact`, `UpdateContact`, `DeleteContact`, `ListContacts`
 - Address: `CreateAddress`, `GetAddress`, `UpdateAddress`, `DeleteAddress`, `ListAddresses`
+- Company: `CreateCompany`, `GetCompany`, `UpdateCompany`, `DeleteCompany`, `ListCompanies`
 
 ## E2E Tests
 
-Profile includes Docker Compose based e2e tests in `profile/e2e` for profiles, contacts, and addresses.
+Profile includes Docker Compose based e2e tests in `profile/e2e` for profiles, contacts, addresses, and companies.
 
 Host port bindings are intentionally non-default:
 - MySQL: `23306` -> container `3306`

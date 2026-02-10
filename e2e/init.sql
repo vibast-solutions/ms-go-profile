@@ -44,3 +44,16 @@ CREATE TABLE addresses (
     INDEX idx_addresses_profile_id_type (profile_id, `type`),
     CONSTRAINT fk_addresses_profile_id FOREIGN KEY (profile_id) REFERENCES profile(id) ON DELETE CASCADE
 );
+
+CREATE TABLE companies (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    registration_no VARCHAR(255) NOT NULL,
+    fiscal_code VARCHAR(255) NOT NULL,
+    profile_id BIGINT UNSIGNED NOT NULL,
+    `type` VARCHAR(255) NOT NULL DEFAULT '',
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    INDEX idx_companies_profile_id_type (profile_id, `type`),
+    CONSTRAINT fk_companies_profile_id FOREIGN KEY (profile_id) REFERENCES profile(id) ON DELETE CASCADE
+);
