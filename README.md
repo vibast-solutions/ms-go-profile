@@ -66,6 +66,36 @@ Set environment variables or use defaults:
 
 - `GET /health` returns `{ "status": "ok" }`
 
+## HTTP APIs
+
+### Profiles
+
+- `POST /profiles`
+- `GET /profiles/:id`
+- `GET /profiles/user/:user_id`
+- `PUT /profiles/:id`
+- `DELETE /profiles/:id`
+
+### Contacts
+
+- `POST /contacts`
+- `GET /contacts/:id`
+- `PUT /contacts/:id`
+- `DELETE /contacts/:id`
+- `GET /contacts?profile_id=<id>&page=<n>&page_size=<n>`
+
+### Addresses
+
+- `POST /addresses`
+- `GET /addresses/:id`
+- `PUT /addresses/:id`
+- `DELETE /addresses/:id`
+- `GET /addresses?profile_id=<id>&page=<n>&page_size=<n>`
+
+Address request fields:
+- Mandatory: `street_name`, `streen_no`, `city`, `county`, `country`, `profile_id`
+- Optional: `postal_code`, `building`, `apartment`, `additional_data` (max 512), `type`
+
 ## gRPC
 
 Generate protobuf/grpc files:
@@ -74,9 +104,15 @@ Generate protobuf/grpc files:
 ./scripts/gen_proto.sh
 ```
 
+Service methods:
+
+- Profile: `CreateProfile`, `GetProfile`, `GetProfileByUserID`, `UpdateProfile`, `DeleteProfile`
+- Contact: `CreateContact`, `GetContact`, `UpdateContact`, `DeleteContact`, `ListContacts`
+- Address: `CreateAddress`, `GetAddress`, `UpdateAddress`, `DeleteAddress`, `ListAddresses`
+
 ## E2E Tests
 
-Profile includes Docker Compose based e2e tests in `profile/e2e`.
+Profile includes Docker Compose based e2e tests in `profile/e2e` for profiles, contacts, and addresses.
 
 Host port bindings are intentionally non-default:
 - MySQL: `23306` -> container `3306`
