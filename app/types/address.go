@@ -50,6 +50,7 @@ type listAddressesQuery struct {
 	ProfileID uint64 `query:"profile_id"`
 	Page      uint32 `query:"page"`
 	PageSize  uint32 `query:"page_size"`
+	Type      string `query:"type"`
 }
 
 func NewCreateAddressRequestFromContext(ctx echo.Context) (*CreateAddressRequest, error) {
@@ -197,6 +198,7 @@ func NewListAddressesRequestFromContext(ctx echo.Context) (*ListAddressesRequest
 		ProfileId: query.ProfileID,
 		Page:      query.Page,
 		PageSize:  query.PageSize,
+		Type:      strings.TrimSpace(query.Type),
 	}, nil
 }
 

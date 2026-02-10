@@ -41,6 +41,7 @@ type listContactsRequest interface {
 	GetProfileId() uint64
 	GetPage() uint32
 	GetPageSize() uint32
+	GetType() string
 }
 
 type contactRepository interface {
@@ -48,7 +49,7 @@ type contactRepository interface {
 	FindByID(ctx context.Context, id uint64) (*entity.Contact, error)
 	Update(ctx context.Context, contact *entity.Contact) error
 	Delete(ctx context.Context, id uint64) error
-	List(ctx context.Context, profileID uint64, limit, offset uint32) ([]*entity.Contact, uint64, error)
+	List(ctx context.Context, profileID uint64, contactType string, limit, offset uint32) ([]*entity.Contact, uint64, error)
 }
 
 type ContactList struct {
@@ -160,7 +161,7 @@ func (s *ContactService) List(ctx context.Context, req listContactsRequest) (*Co
 
 	offset := (page - 1) * pageSize
 
-	contacts, total, err := s.contactRepo.List(ctx, req.GetProfileId(), pageSize, offset)
+	contacts, total, err := s.contactRepo.List(ctx, req.GetProfileId(), req.GetType(), pageSize, offset)
 	if err != nil {
 		return nil, err
 	}

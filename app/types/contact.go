@@ -172,6 +172,7 @@ func NewListContactsRequestFromContext(ctx echo.Context) (*ListContactsRequest, 
 		}
 		req.PageSize = uint32(pageSize)
 	}
+	req.Type = strings.TrimSpace(ctx.QueryParam("type"))
 
 	return req, nil
 }

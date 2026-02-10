@@ -147,6 +147,7 @@ func (c *ContactController) List(ctx echo.Context) error {
 		"profile_id": req.GetProfileId(),
 		"page":       req.GetPage(),
 		"page_size":  req.GetPageSize(),
+		"type":       req.GetType(),
 	})
 	l.Info("List contacts request received")
 

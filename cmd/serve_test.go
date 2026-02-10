@@ -29,7 +29,7 @@ func (cmdContactRepoStub) Create(context.Context, *entity.Contact) error        
 func (cmdContactRepoStub) FindByID(context.Context, uint64) (*entity.Contact, error) { return nil, nil }
 func (cmdContactRepoStub) Update(context.Context, *entity.Contact) error             { return nil }
 func (cmdContactRepoStub) Delete(context.Context, uint64) error                      { return nil }
-func (cmdContactRepoStub) List(context.Context, uint64, uint32, uint32) ([]*entity.Contact, uint64, error) {
+func (cmdContactRepoStub) List(context.Context, uint64, string, uint32, uint32) ([]*entity.Contact, uint64, error) {
 	return nil, 0, nil
 }
 
@@ -39,7 +39,7 @@ func (cmdAddressRepoStub) Create(context.Context, *entity.Address) error        
 func (cmdAddressRepoStub) FindByID(context.Context, uint64) (*entity.Address, error) { return nil, nil }
 func (cmdAddressRepoStub) Update(context.Context, *entity.Address) error             { return nil }
 func (cmdAddressRepoStub) Delete(context.Context, uint64) error                      { return nil }
-func (cmdAddressRepoStub) List(context.Context, uint64, uint32, uint32) ([]*entity.Address, uint64, error) {
+func (cmdAddressRepoStub) List(context.Context, uint64, string, uint32, uint32) ([]*entity.Address, uint64, error) {
 	return nil, 0, nil
 }
 

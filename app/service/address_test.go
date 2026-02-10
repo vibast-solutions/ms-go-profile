@@ -47,18 +47,20 @@ type mockListAddressesReq struct {
 	profileID uint64
 	page      uint32
 	pageSize  uint32
+	kind      string
 }
 
 func (r mockListAddressesReq) GetProfileId() uint64 { return r.profileID }
 func (r mockListAddressesReq) GetPage() uint32      { return r.page }
 func (r mockListAddressesReq) GetPageSize() uint32  { return r.pageSize }
+func (r mockListAddressesReq) GetType() string      { return r.kind }
 
 type mockAddressRepo struct {
 	createFn   func(ctx context.Context, address *entity.Address) error
 	findByIDFn func(ctx context.Context, id uint64) (*entity.Address, error)
 	updateFn   func(ctx context.Context, address *entity.Address) error
 	deleteFn   func(ctx context.Context, id uint64) error
-	listFn     func(ctx context.Context, profileID uint64, limit, offset uint32) ([]*entity.Address, uint64, error)
+	listFn     func(ctx context.Context, profileID uint64, addressType string, limit, offset uint32) ([]*entity.Address, uint64, error)
 }
 
 func (m *mockAddressRepo) Create(ctx context.Context, address *entity.Address) error {
@@ -89,9 +91,9 @@ func (m *mockAddressRepo) Delete(ctx context.Context, id uint64) error {
 	return nil
 }
 
-func (m *mockAddressRepo) List(ctx context.Context, profileID uint64, limit, offset uint32) ([]*entity.Address, uint64, error) {
+func (m *mockAddressRepo) List(ctx context.Context, profileID uint64, addressType string, limit, offset uint32) ([]*entity.Address, uint64, error) {
 	if m.listFn != nil {
-		return m.listFn(ctx, profileID, limit, offset)
+		return m.listFn(ctx, profileID, addressType, limit, offset)
 	}
 	return nil, 0, nil
 }
@@ -164,16 +166,16 @@ func TestAddressDeleteNotFoundMapped(t *testing.T) {
 func TestAddressListDefaults(t *testing.T) {
 	now := time.Now()
 	repo := &mockAddressRepo{
-		listFn: func(_ context.Context, profileID uint64, limit, offset uint32) ([]*entity.Address, uint64, error) {
-			if profileID != 7 || limit != 20 || offset != 0 {
-				t.Fatalf("unexpected list args profileID=%d limit=%d offset=%d", profileID, limit, offset)
+		listFn: func(_ context.Context, profileID uint64, addressType string, limit, offset uint32) ([]*entity.Address, uint64, error) {
+			if profileID != 7 || addressType != "billing" || limit != 20 || offset != 0 {
+				t.Fatalf("unexpected list args profileID=%d addressType=%q limit=%d offset=%d", profileID, addressType, limit, offset)
 			}
 			return []*entity.Address{{ID: 1, StreetName: "Street", CreatedAt: now, UpdatedAt: now}}, 1, nil
 		},
 	}
 	svc := NewAddressService(repo)
 
-	result, err := svc.List(context.Background(), mockListAddressesReq{profileID: 7, page: 0, pageSize: 0})
+	result, err := svc.List(context.Background(), mockListAddressesReq{profileID: 7, page: 0, pageSize: 0, kind: "billing"})
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}

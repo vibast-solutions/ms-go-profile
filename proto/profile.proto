@@ -91,6 +91,7 @@ message ListContactsRequest {
   uint64 profile_id = 1;
   uint32 page = 2;
   uint32 page_size = 3;
+  string type = 4;
 }
 
 message ContactResponse {
@@ -158,6 +159,7 @@ message ListAddressesRequest {
   uint64 profile_id = 1;
   uint32 page = 2;
   uint32 page_size = 3;
+  string type = 4;
 }
 
 message AddressResponse {

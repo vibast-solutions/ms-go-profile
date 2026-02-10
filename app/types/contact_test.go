@@ -76,7 +76,7 @@ func TestUpdateContactRequestValidate(t *testing.T) {
 
 func TestNewListContactsRequestFromContext(t *testing.T) {
 	e := echo.New()
-	req := httptest.NewRequest("GET", "/contacts?profile_id=5&page=2&page_size=30", nil)
+	req := httptest.NewRequest("GET", "/contacts?profile_id=5&page=2&page_size=30&type=emergency", nil)
 	rec := httptest.NewRecorder()
 	ctx := e.NewContext(req, rec)
 
@@ -84,7 +84,7 @@ func TestNewListContactsRequestFromContext(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected parse success, got %v", err)
 	}
-	if parsed.GetProfileId() != 5 || parsed.GetPage() != 2 || parsed.GetPageSize() != 30 {
+	if parsed.GetProfileId() != 5 || parsed.GetPage() != 2 || parsed.GetPageSize() != 30 || parsed.GetType() != "emergency" {
 		t.Fatalf("unexpected parsed values: %+v", parsed)
 	}
 }

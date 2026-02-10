@@ -167,20 +167,32 @@ func (r *AddressRepository) Delete(ctx context.Context, id uint64) error {
 	return nil
 }
 
-func (r *AddressRepository) List(ctx context.Context, profileID uint64, limit, offset uint32) ([]*entity.Address, uint64, error) {
+func (r *AddressRepository) List(ctx context.Context, profileID uint64, addressType string, limit, offset uint32) ([]*entity.Address, uint64, error) {
 	if limit == 0 {
 		limit = 20
 	}
 
-	countQuery := `SELECT COUNT(*) FROM addresses`
-	countArgs := make([]interface{}, 0, 1)
+	addressType = strings.TrimSpace(addressType)
+	whereClauses := make([]string, 0, 2)
+	countArgs := make([]interface{}, 0, 2)
 	if profileID > 0 {
-		countQuery += ` WHERE profile_id = ?`
+		whereClauses = append(whereClauses, "profile_id = ?")
 		countArgs = append(countArgs, profileID)
+	}
+	if addressType != "" {
+		whereClauses = append(whereClauses, "`type` = ?")
+		countArgs = append(countArgs, addressType)
+	}
+
+	countQuery := strings.Builder{}
+	countQuery.WriteString(`SELECT COUNT(*) FROM addresses`)
+	if len(whereClauses) > 0 {
+		countQuery.WriteString(` WHERE `)
+		countQuery.WriteString(strings.Join(whereClauses, " AND "))
 	}
 
 	var total uint64
-	if err := r.db.QueryRowContext(ctx, countQuery, countArgs...).Scan(&total); err != nil {
+	if err := r.db.QueryRowContext(ctx, countQuery.String(), countArgs...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
@@ -192,10 +204,11 @@ func (r *AddressRepository) List(ctx context.Context, profileID uint64, limit, o
 			created_at, updated_at
 		FROM addresses
 	`)
-	args := make([]interface{}, 0, 3)
-	if profileID > 0 {
-		query.WriteString(` WHERE profile_id = ?`)
-		args = append(args, profileID)
+	args := make([]interface{}, 0, 4)
+	if len(whereClauses) > 0 {
+		query.WriteString(` WHERE `)
+		query.WriteString(strings.Join(whereClauses, " AND "))
+		args = append(args, countArgs...)
 	}
 	query.WriteString(` ORDER BY id DESC LIMIT ? OFFSET ?`)
 	args = append(args, limit, offset)

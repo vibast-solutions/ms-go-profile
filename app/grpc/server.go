@@ -289,6 +289,7 @@ func (s *ProfileServer) ListContacts(ctx context.Context, pbReq *types.ListConta
 		"profile_id": pbReq.GetProfileId(),
 		"page":       pbReq.GetPage(),
 		"page_size":  pbReq.GetPageSize(),
+		"type":       pbReq.GetType(),
 	}).Info("List contacts request received (grpc)")
 
 	result, err := s.contactService.List(ctx, pbReq)
@@ -411,6 +412,7 @@ func (s *ProfileServer) ListAddresses(ctx context.Context, pbReq *types.ListAddr
 		"profile_id": pbReq.GetProfileId(),
 		"page":       pbReq.GetPage(),
 		"page_size":  pbReq.GetPageSize(),
+		"type":       pbReq.GetType(),
 	}).Info("List addresses request received (grpc)")
 
 	result, err := s.addressService.List(ctx, pbReq)

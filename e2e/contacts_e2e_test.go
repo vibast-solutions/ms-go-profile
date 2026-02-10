@@ -333,6 +333,34 @@ func TestContactsE2E_CrossTransportCRUDAndList(t *testing.T) {
 		}
 	})
 
+	t.Run("HTTPListByType", func(t *testing.T) {
+		resp, body := httpClient.doJSON(
+			t,
+			http.MethodGet,
+			"/contacts?profile_id="+strconv.FormatUint(state.profileAID, 10)+"&type=emergency&page=1&page_size=10",
+			nil,
+		)
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, string(body))
+		}
+
+		var list types.ListContactsResponse
+		if err := json.Unmarshal(body, &list); err != nil {
+			t.Fatalf("unmarshal list contacts by type failed: %v body=%s", err, string(body))
+		}
+		if list.GetTotal() < 1 {
+			t.Fatalf("expected at least 1 contact for type filter, got total=%d", list.GetTotal())
+		}
+		if !hasContactID(list.GetContacts(), state.contactFullID) {
+			t.Fatalf("expected contact %d in filtered list", state.contactFullID)
+		}
+		for _, c := range list.GetContacts() {
+			if c.GetType() != "emergency" {
+				t.Fatalf("expected only emergency contacts, got type=%q", c.GetType())
+			}
+		}
+	})
+
 	t.Run("HTTPListPagination", func(t *testing.T) {
 		resp1, body1 := httpClient.doJSON(
 			t,
@@ -383,6 +411,26 @@ func TestContactsE2E_CrossTransportCRUDAndList(t *testing.T) {
 		}
 		if list.GetTotal() < 2 {
 			t.Fatalf("expected at least 2 contacts for profile A, got total=%d", list.GetTotal())
+		}
+	})
+
+	t.Run("GRPCListByType", func(t *testing.T) {
+		list, err := grpcClient.ListContacts(context.Background(), &types.ListContactsRequest{
+			ProfileId: state.profileAID,
+			Type:      "emergency",
+			Page:      1,
+			PageSize:  10,
+		})
+		if err != nil {
+			t.Fatalf("grpc list contacts by type failed: %v", err)
+		}
+		if list.GetTotal() < 1 {
+			t.Fatalf("expected at least 1 contact for type filter, got total=%d", list.GetTotal())
+		}
+		for _, c := range list.GetContacts() {
+			if c.GetType() != "emergency" {
+				t.Fatalf("expected only emergency contacts, got type=%q", c.GetType())
+			}
 		}
 	})
 

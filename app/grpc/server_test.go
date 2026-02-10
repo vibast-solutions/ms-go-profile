@@ -26,7 +26,7 @@ type grpcContactRepoStub struct {
 	findByIDFn func(ctx context.Context, id uint64) (*entity.Contact, error)
 	updateFn   func(ctx context.Context, contact *entity.Contact) error
 	deleteFn   func(ctx context.Context, id uint64) error
-	listFn     func(ctx context.Context, profileID uint64, limit, offset uint32) ([]*entity.Contact, uint64, error)
+	listFn     func(ctx context.Context, profileID uint64, contactType string, limit, offset uint32) ([]*entity.Contact, uint64, error)
 }
 
 type grpcAddressRepoStub struct {
@@ -34,7 +34,7 @@ type grpcAddressRepoStub struct {
 	findByIDFn func(ctx context.Context, id uint64) (*entity.Address, error)
 	updateFn   func(ctx context.Context, address *entity.Address) error
 	deleteFn   func(ctx context.Context, id uint64) error
-	listFn     func(ctx context.Context, profileID uint64, limit, offset uint32) ([]*entity.Address, uint64, error)
+	listFn     func(ctx context.Context, profileID uint64, addressType string, limit, offset uint32) ([]*entity.Address, uint64, error)
 }
 
 func (s *grpcRepoStub) Create(ctx context.Context, profile *entity.Profile) error {
@@ -100,9 +100,9 @@ func (s *grpcContactRepoStub) Delete(ctx context.Context, id uint64) error {
 	return nil
 }
 
-func (s *grpcContactRepoStub) List(ctx context.Context, profileID uint64, limit, offset uint32) ([]*entity.Contact, uint64, error) {
+func (s *grpcContactRepoStub) List(ctx context.Context, profileID uint64, contactType string, limit, offset uint32) ([]*entity.Contact, uint64, error) {
 	if s.listFn != nil {
-		return s.listFn(ctx, profileID, limit, offset)
+		return s.listFn(ctx, profileID, contactType, limit, offset)
 	}
 	return nil, 0, nil
 }
@@ -135,9 +135,9 @@ func (s *grpcAddressRepoStub) Delete(ctx context.Context, id uint64) error {
 	return nil
 }
 
-func (s *grpcAddressRepoStub) List(ctx context.Context, profileID uint64, limit, offset uint32) ([]*entity.Address, uint64, error) {
+func (s *grpcAddressRepoStub) List(ctx context.Context, profileID uint64, addressType string, limit, offset uint32) ([]*entity.Address, uint64, error) {
 	if s.listFn != nil {
-		return s.listFn(ctx, profileID, limit, offset)
+		return s.listFn(ctx, profileID, addressType, limit, offset)
 	}
 	return nil, 0, nil
 }
@@ -444,9 +444,9 @@ func TestGetContactNotFound(t *testing.T) {
 
 func TestListContactsSuccess(t *testing.T) {
 	server := newGRPCServerWithContactRepo(&grpcContactRepoStub{
-		listFn: func(_ context.Context, profileID uint64, limit, offset uint32) ([]*entity.Contact, uint64, error) {
-			if profileID != 9 || limit != 10 || offset != 0 {
-				t.Fatalf("unexpected list args profileID=%d limit=%d offset=%d", profileID, limit, offset)
+		listFn: func(_ context.Context, profileID uint64, contactType string, limit, offset uint32) ([]*entity.Contact, uint64, error) {
+			if profileID != 9 || contactType != "emergency" || limit != 10 || offset != 0 {
+				t.Fatalf("unexpected list args profileID=%d contactType=%q limit=%d offset=%d", profileID, contactType, limit, offset)
 			}
 			return []*entity.Contact{
 				{
@@ -465,6 +465,7 @@ func TestListContactsSuccess(t *testing.T) {
 		ProfileId: 9,
 		Page:      1,
 		PageSize:  10,
+		Type:      "emergency",
 	})
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -516,9 +517,9 @@ func TestGetAddressNotFound(t *testing.T) {
 
 func TestListAddressesSuccess(t *testing.T) {
 	server := newGRPCServerWithAddressRepo(&grpcAddressRepoStub{
-		listFn: func(_ context.Context, profileID uint64, limit, offset uint32) ([]*entity.Address, uint64, error) {
-			if profileID != 9 || limit != 10 || offset != 0 {
-				t.Fatalf("unexpected list args profileID=%d limit=%d offset=%d", profileID, limit, offset)
+		listFn: func(_ context.Context, profileID uint64, addressType string, limit, offset uint32) ([]*entity.Address, uint64, error) {
+			if profileID != 9 || addressType != "billing" || limit != 10 || offset != 0 {
+				t.Fatalf("unexpected list args profileID=%d addressType=%q limit=%d offset=%d", profileID, addressType, limit, offset)
 			}
 			return []*entity.Address{
 				{
@@ -538,6 +539,7 @@ func TestListAddressesSuccess(t *testing.T) {
 		ProfileId: 9,
 		Page:      1,
 		PageSize:  10,
+		Type:      "billing",
 	})
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)

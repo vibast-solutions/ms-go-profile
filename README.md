@@ -82,7 +82,7 @@ Set environment variables or use defaults:
 - `GET /contacts/:id`
 - `PUT /contacts/:id`
 - `DELETE /contacts/:id`
-- `GET /contacts?profile_id=<id>&page=<n>&page_size=<n>`
+- `GET /contacts?profile_id=<id>&page=<n>&page_size=<n>&type=<type>`
 
 ### Addresses
 
@@ -90,7 +90,7 @@ Set environment variables or use defaults:
 - `GET /addresses/:id`
 - `PUT /addresses/:id`
 - `DELETE /addresses/:id`
-- `GET /addresses?profile_id=<id>&page=<n>&page_size=<n>`
+- `GET /addresses?profile_id=<id>&page=<n>&page_size=<n>&type=<type>`
 
 Address request fields:
 - Mandatory: `street_name`, `streen_no`, `city`, `county`, `country`, `profile_id`

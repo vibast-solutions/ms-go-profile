@@ -20,7 +20,7 @@ type contactRepoStub struct {
 	findByIDFn func(ctx context.Context, id uint64) (*entity.Contact, error)
 	updateFn   func(ctx context.Context, contact *entity.Contact) error
 	deleteFn   func(ctx context.Context, id uint64) error
-	listFn     func(ctx context.Context, profileID uint64, limit, offset uint32) ([]*entity.Contact, uint64, error)
+	listFn     func(ctx context.Context, profileID uint64, contactType string, limit, offset uint32) ([]*entity.Contact, uint64, error)
 }
 
 func (s *contactRepoStub) Create(ctx context.Context, contact *entity.Contact) error {
@@ -51,9 +51,9 @@ func (s *contactRepoStub) Delete(ctx context.Context, id uint64) error {
 	return nil
 }
 
-func (s *contactRepoStub) List(ctx context.Context, profileID uint64, limit, offset uint32) ([]*entity.Contact, uint64, error) {
+func (s *contactRepoStub) List(ctx context.Context, profileID uint64, contactType string, limit, offset uint32) ([]*entity.Contact, uint64, error) {
 	if s.listFn != nil {
-		return s.listFn(ctx, profileID, limit, offset)
+		return s.listFn(ctx, profileID, contactType, limit, offset)
 	}
 	return nil, 0, nil
 }
@@ -157,9 +157,9 @@ func TestContactListSuccess(t *testing.T) {
 	now := time.Now()
 	dob := time.Date(1990, 1, 2, 0, 0, 0, 0, time.UTC)
 	ctrl := newContactControllerWithRepo(&contactRepoStub{
-		listFn: func(_ context.Context, profileID uint64, limit, offset uint32) ([]*entity.Contact, uint64, error) {
-			if profileID != 4 || limit != 5 || offset != 5 {
-				t.Fatalf("unexpected list args profileID=%d limit=%d offset=%d", profileID, limit, offset)
+		listFn: func(_ context.Context, profileID uint64, contactType string, limit, offset uint32) ([]*entity.Contact, uint64, error) {
+			if profileID != 4 || contactType != "emergency" || limit != 5 || offset != 5 {
+				t.Fatalf("unexpected list args profileID=%d contactType=%q limit=%d offset=%d", profileID, contactType, limit, offset)
 			}
 			return []*entity.Contact{
 				{
@@ -177,7 +177,7 @@ func TestContactListSuccess(t *testing.T) {
 		},
 	})
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/contacts?profile_id=4&page=2&page_size=5", nil)
+	req := httptest.NewRequest(http.MethodGet, "/contacts?profile_id=4&page=2&page_size=5&type=emergency", nil)
 	rec := httptest.NewRecorder()
 	ctx := e.NewContext(req, rec)
 

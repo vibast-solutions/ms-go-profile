@@ -92,7 +92,7 @@ func TestListAddressesRequestValidate(t *testing.T) {
 
 func TestNewListAddressesRequestFromContext(t *testing.T) {
 	e := echo.New()
-	req := httptest.NewRequest("GET", "/addresses?profile_id=7&page=2&page_size=30", nil)
+	req := httptest.NewRequest("GET", "/addresses?profile_id=7&page=2&page_size=30&type=billing", nil)
 	rec := httptest.NewRecorder()
 	ctx := e.NewContext(req, rec)
 
@@ -100,7 +100,7 @@ func TestNewListAddressesRequestFromContext(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected parse success, got %v", err)
 	}
-	if parsed.GetProfileId() != 7 || parsed.GetPage() != 2 || parsed.GetPageSize() != 30 {
+	if parsed.GetProfileId() != 7 || parsed.GetPage() != 2 || parsed.GetPageSize() != 30 || parsed.GetType() != "billing" {
 		t.Fatalf("unexpected parsed values: %+v", parsed)
 	}
 }

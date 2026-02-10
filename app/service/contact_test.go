@@ -52,18 +52,20 @@ type mockListContactsReq struct {
 	profileID uint64
 	page      uint32
 	pageSize  uint32
+	kind      string
 }
 
 func (r mockListContactsReq) GetProfileId() uint64 { return r.profileID }
 func (r mockListContactsReq) GetPage() uint32      { return r.page }
 func (r mockListContactsReq) GetPageSize() uint32  { return r.pageSize }
+func (r mockListContactsReq) GetType() string      { return r.kind }
 
 type mockContactRepo struct {
 	createFn   func(ctx context.Context, contact *entity.Contact) error
 	findByIDFn func(ctx context.Context, id uint64) (*entity.Contact, error)
 	updateFn   func(ctx context.Context, contact *entity.Contact) error
 	deleteFn   func(ctx context.Context, id uint64) error
-	listFn     func(ctx context.Context, profileID uint64, limit, offset uint32) ([]*entity.Contact, uint64, error)
+	listFn     func(ctx context.Context, profileID uint64, contactType string, limit, offset uint32) ([]*entity.Contact, uint64, error)
 }
 
 func (m *mockContactRepo) Create(ctx context.Context, contact *entity.Contact) error {
@@ -94,9 +96,9 @@ func (m *mockContactRepo) Delete(ctx context.Context, id uint64) error {
 	return nil
 }
 
-func (m *mockContactRepo) List(ctx context.Context, profileID uint64, limit, offset uint32) ([]*entity.Contact, uint64, error) {
+func (m *mockContactRepo) List(ctx context.Context, profileID uint64, contactType string, limit, offset uint32) ([]*entity.Contact, uint64, error) {
 	if m.listFn != nil {
-		return m.listFn(ctx, profileID, limit, offset)
+		return m.listFn(ctx, profileID, contactType, limit, offset)
 	}
 	return nil, 0, nil
 }
@@ -176,16 +178,16 @@ func TestContactDeleteRepositoryNotFoundMapped(t *testing.T) {
 func TestContactListDefaults(t *testing.T) {
 	now := time.Now()
 	repo := &mockContactRepo{
-		listFn: func(_ context.Context, profileID uint64, limit, offset uint32) ([]*entity.Contact, uint64, error) {
-			if profileID != 5 || limit != 20 || offset != 0 {
-				t.Fatalf("unexpected list args profileID=%d limit=%d offset=%d", profileID, limit, offset)
+		listFn: func(_ context.Context, profileID uint64, contactType string, limit, offset uint32) ([]*entity.Contact, uint64, error) {
+			if profileID != 5 || contactType != "emergency" || limit != 20 || offset != 0 {
+				t.Fatalf("unexpected list args profileID=%d contactType=%q limit=%d offset=%d", profileID, contactType, limit, offset)
 			}
 			return []*entity.Contact{{ID: 1, FirstName: "John", CreatedAt: now, UpdatedAt: now}}, 1, nil
 		},
 	}
 	svc := NewContactService(repo)
 
-	result, err := svc.List(context.Background(), mockListContactsReq{profileID: 5, page: 0, pageSize: 0})
+	result, err := svc.List(context.Background(), mockListContactsReq{profileID: 5, page: 0, pageSize: 0, kind: "emergency"})
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}

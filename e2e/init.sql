@@ -22,7 +22,7 @@ CREATE TABLE contacts (
     updated_at DATETIME NOT NULL,
     profile_id BIGINT UNSIGNED NOT NULL,
     `type` VARCHAR(255) NOT NULL DEFAULT '',
-    INDEX idx_contacts_profile_id (profile_id),
+    INDEX idx_contacts_profile_id_type (profile_id, `type`),
     CONSTRAINT fk_contacts_profile_id FOREIGN KEY (profile_id) REFERENCES profile(id) ON DELETE CASCADE
 );
 
@@ -41,6 +41,6 @@ CREATE TABLE addresses (
     `type` VARCHAR(255) NOT NULL DEFAULT '',
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
-    INDEX idx_addresses_profile_id (profile_id),
+    INDEX idx_addresses_profile_id_type (profile_id, `type`),
     CONSTRAINT fk_addresses_profile_id FOREIGN KEY (profile_id) REFERENCES profile(id) ON DELETE CASCADE
 );

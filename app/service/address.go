@@ -46,6 +46,7 @@ type listAddressesRequest interface {
 	GetProfileId() uint64
 	GetPage() uint32
 	GetPageSize() uint32
+	GetType() string
 }
 
 type addressRepository interface {
@@ -53,7 +54,7 @@ type addressRepository interface {
 	FindByID(ctx context.Context, id uint64) (*entity.Address, error)
 	Update(ctx context.Context, address *entity.Address) error
 	Delete(ctx context.Context, id uint64) error
-	List(ctx context.Context, profileID uint64, limit, offset uint32) ([]*entity.Address, uint64, error)
+	List(ctx context.Context, profileID uint64, addressType string, limit, offset uint32) ([]*entity.Address, uint64, error)
 }
 
 type AddressList struct {
@@ -163,7 +164,7 @@ func (s *AddressService) List(ctx context.Context, req listAddressesRequest) (*A
 
 	offset := (page - 1) * pageSize
 
-	addresses, total, err := s.addressRepo.List(ctx, req.GetProfileId(), pageSize, offset)
+	addresses, total, err := s.addressRepo.List(ctx, req.GetProfileId(), req.GetType(), pageSize, offset)
 	if err != nil {
 		return nil, err
 	}

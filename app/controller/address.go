@@ -145,6 +145,7 @@ func (c *AddressController) List(ctx echo.Context) error {
 		"profile_id": req.GetProfileId(),
 		"page":       req.GetPage(),
 		"page_size":  req.GetPageSize(),
+		"type":       req.GetType(),
 	})
 	l.Info("List addresses request received")
 

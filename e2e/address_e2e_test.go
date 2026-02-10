@@ -230,6 +230,33 @@ func TestAddressE2E_CrossTransportCRUDAndList(t *testing.T) {
 		}
 	})
 
+	t.Run("HTTPListByType", func(t *testing.T) {
+		resp, body := httpClient.doJSON(
+			t,
+			http.MethodGet,
+			"/addresses?profile_id="+strconv.FormatUint(state.profileAID, 10)+"&type=billing&page=1&page_size=10",
+			nil,
+		)
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, string(body))
+		}
+		var list types.ListAddressesResponse
+		if err := json.Unmarshal(body, &list); err != nil {
+			t.Fatalf("unmarshal list addresses by type failed: %v body=%s", err, string(body))
+		}
+		if list.GetTotal() < 1 {
+			t.Fatalf("expected at least 1 address for type filter, got %d", list.GetTotal())
+		}
+		if !hasAddressID(list.GetAddresses(), state.addressGRPCID) {
+			t.Fatalf("expected address %d in filtered list", state.addressGRPCID)
+		}
+		for _, a := range list.GetAddresses() {
+			if a.GetType() != "billing" {
+				t.Fatalf("expected only billing addresses, got type=%q", a.GetType())
+			}
+		}
+	})
+
 	t.Run("HTTPListPagination", func(t *testing.T) {
 		resp, body := httpClient.doJSON(
 			t,
@@ -260,6 +287,26 @@ func TestAddressE2E_CrossTransportCRUDAndList(t *testing.T) {
 		}
 		if list.GetTotal() < 2 {
 			t.Fatalf("expected at least 2 addresses, got %d", list.GetTotal())
+		}
+	})
+
+	t.Run("GRPCListByType", func(t *testing.T) {
+		list, err := grpcClient.ListAddresses(context.Background(), &types.ListAddressesRequest{
+			ProfileId: state.profileAID,
+			Type:      "billing",
+			Page:      1,
+			PageSize:  10,
+		})
+		if err != nil {
+			t.Fatalf("grpc list addresses by type failed: %v", err)
+		}
+		if list.GetTotal() < 1 {
+			t.Fatalf("expected at least 1 address for type filter, got %d", list.GetTotal())
+		}
+		for _, a := range list.GetAddresses() {
+			if a.GetType() != "billing" {
+				t.Fatalf("expected only billing addresses, got type=%q", a.GetType())
+			}
 		}
 	})
 
