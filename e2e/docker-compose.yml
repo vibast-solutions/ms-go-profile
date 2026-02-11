@@ -23,9 +23,14 @@ services:
       GRPC_PORT: 9090
       MYSQL_DSN: root:root@tcp(mysql:3306)/profile?parseTime=true
       LOG_LEVEL: info
+      APP_API_KEY: profile-app-api-key
+      AUTH_SERVICE_GRPC_ADDR: host.docker.internal:38081
+      APP_SERVICE_NAME: profile-service
     ports:
       - "28080:8080"
       - "29090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       mysql:
         condition: service_healthy
