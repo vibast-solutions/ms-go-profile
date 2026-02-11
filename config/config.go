@@ -10,15 +10,17 @@ import (
 )
 
 type Config struct {
-	HTTPHost     string
-	HTTPPort     string
-	GRPCHost     string
-	GRPCPort     string
-	MySQLDSN     string
-	MySQLMaxOpen int
-	MySQLMaxIdle int
-	MySQLMaxLife time.Duration
-	LogLevel     string
+	HTTPHost            string
+	HTTPPort            string
+	GRPCHost            string
+	GRPCPort            string
+	MySQLDSN            string
+	MySQLMaxOpen        int
+	MySQLMaxIdle        int
+	MySQLMaxLife        time.Duration
+	LogLevel            string
+	AuthServiceGRPCAddr string
+	AppServiceName      string
 }
 
 // Load reads configuration from environment variables (and .env when present).
@@ -31,15 +33,17 @@ func Load() (*Config, error) {
 	}
 
 	return &Config{
-		HTTPHost:     getEnv("HTTP_HOST", "0.0.0.0"),
-		HTTPPort:     getEnv("HTTP_PORT", "8080"),
-		GRPCHost:     getEnv("GRPC_HOST", "0.0.0.0"),
-		GRPCPort:     getEnv("GRPC_PORT", "9090"),
-		MySQLDSN:     mysqlDSN,
-		MySQLMaxOpen: getIntEnv("MYSQL_MAX_OPEN_CONNS", 10),
-		MySQLMaxIdle: getIntEnv("MYSQL_MAX_IDLE_CONNS", 5),
-		MySQLMaxLife: getDurationEnv("MYSQL_CONN_MAX_LIFETIME_MINUTES", 30*time.Minute),
-		LogLevel:     getEnv("LOG_LEVEL", "info"),
+		HTTPHost:            getEnv("HTTP_HOST", "0.0.0.0"),
+		HTTPPort:            getEnv("HTTP_PORT", "8080"),
+		GRPCHost:            getEnv("GRPC_HOST", "0.0.0.0"),
+		GRPCPort:            getEnv("GRPC_PORT", "9090"),
+		MySQLDSN:            mysqlDSN,
+		MySQLMaxOpen:        getIntEnv("MYSQL_MAX_OPEN_CONNS", 10),
+		MySQLMaxIdle:        getIntEnv("MYSQL_MAX_IDLE_CONNS", 5),
+		MySQLMaxLife:        getDurationEnv("MYSQL_CONN_MAX_LIFETIME_MINUTES", 30*time.Minute),
+		LogLevel:            getEnv("LOG_LEVEL", "info"),
+		AuthServiceGRPCAddr: getEnv("AUTH_SERVICE_GRPC_ADDR", "localhost:9090"),
+		AppServiceName:      getEnv("APP_SERVICE_NAME", "profile-service"),
 	}, nil
 }
 

@@ -12,6 +12,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	authclient "github.com/vibast-solutions/lib-go-auth/client"
+	authmiddleware "github.com/vibast-solutions/lib-go-auth/middleware"
+	authlibservice "github.com/vibast-solutions/lib-go-auth/service"
 	"github.com/vibast-solutions/ms-go-profile/app/controller"
 	profilegrpc "github.com/vibast-solutions/ms-go-profile/app/grpc"
 	"github.com/vibast-solutions/ms-go-profile/app/repository"
@@ -76,8 +79,32 @@ func runServe(_ *cobra.Command, _ []string) {
 	companyService := service.NewCompanyService(companyRepo)
 	companyController := controller.NewCompanyController(companyService)
 
-	e := setupHTTPServer(profileController, contactController, addressController, companyController)
-	grpcServer, lis := setupGRPCServer(cfg, profileService, contactService, addressService, companyService)
+	authGRPCClient, err := authclient.NewGRPCClientFromAddr(context.Background(), cfg.AuthServiceGRPCAddr)
+	if err != nil {
+		logrus.WithError(err).Fatal("Failed to initialize auth gRPC client")
+	}
+	defer authGRPCClient.Close()
+	internalAuthService := authlibservice.NewInternalAuthService(authGRPCClient)
+	echoInternalAuthMiddleware := authmiddleware.NewEchoInternalAuthMiddleware(internalAuthService)
+	grpcInternalAuthMiddleware := authmiddleware.NewGRPCInternalAuthMiddleware(internalAuthService)
+
+	e := setupHTTPServer(
+		profileController,
+		contactController,
+		addressController,
+		companyController,
+		echoInternalAuthMiddleware,
+		cfg.AppServiceName,
+	)
+	grpcServer, lis := setupGRPCServer(
+		cfg,
+		profileService,
+		contactService,
+		addressService,
+		companyService,
+		grpcInternalAuthMiddleware,
+		cfg.AppServiceName,
+	)
 
 	go func() {
 		httpAddr := net.JoinHostPort(cfg.HTTPHost, cfg.HTTPPort)
@@ -111,7 +138,14 @@ func runServe(_ *cobra.Command, _ []string) {
 }
 
 // setupHTTPServer configures the Echo HTTP server and routes.
-func setupHTTPServer(profileCtrl *controller.ProfileController, contactCtrl *controller.ContactController, addressCtrl *controller.AddressController, companyCtrl *controller.CompanyController) *echo.Echo {
+func setupHTTPServer(
+	profileCtrl *controller.ProfileController,
+	contactCtrl *controller.ContactController,
+	addressCtrl *controller.AddressController,
+	companyCtrl *controller.CompanyController,
+	internalAuthMiddleware *authmiddleware.EchoInternalAuthMiddleware,
+	appServiceName string,
+) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
 
@@ -153,6 +187,7 @@ func setupHTTPServer(profileCtrl *controller.ProfileController, contactCtrl *con
 			return fmt.Sprintf("rest-%s", uuid.New().String())
 		},
 	}))
+	e.Use(internalAuthMiddleware.RequireInternalAccess(appServiceName))
 
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(200, map[string]string{"status": "ok"})
@@ -190,7 +225,15 @@ func setupHTTPServer(profileCtrl *controller.ProfileController, contactCtrl *con
 }
 
 // setupGRPCServer builds the gRPC server and listener.
-func setupGRPCServer(cfg *config.Config, profileSvc *service.ProfileService, contactSvc *service.ContactService, addressSvc *service.AddressService, companySvc *service.CompanyService) (*grpc.Server, net.Listener) {
+func setupGRPCServer(
+	cfg *config.Config,
+	profileSvc *service.ProfileService,
+	contactSvc *service.ContactService,
+	addressSvc *service.AddressService,
+	companySvc *service.CompanyService,
+	internalAuthMiddleware *authmiddleware.GRPCInternalAuthMiddleware,
+	appServiceName string,
+) (*grpc.Server, net.Listener) {
 	grpcAddr := net.JoinHostPort(cfg.GRPCHost, cfg.GRPCPort)
 	lis, err := net.Listen("tcp", grpcAddr)
 	if err != nil {
@@ -202,6 +245,7 @@ func setupGRPCServer(cfg *config.Config, profileSvc *service.ProfileService, con
 			profilegrpc.RecoveryInterceptor(),
 			profilegrpc.RequestIDInterceptor(),
 			profilegrpc.LoggingInterceptor(),
+			internalAuthMiddleware.UnaryRequireInternalAccess(appServiceName),
 		),
 	)
 	profileServer := profilegrpc.NewProfileServer(profileSvc, contactSvc, addressSvc, companySvc)

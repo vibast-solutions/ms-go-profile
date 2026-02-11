@@ -14,9 +14,7 @@ import (
 	"time"
 
 	"github.com/vibast-solutions/ms-go-profile/app/types"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 )
 
@@ -39,10 +37,7 @@ func TestAddressE2E_CrossTransportCRUDAndList(t *testing.T) {
 
 	httpClient := newHTTPClient(httpBase)
 
-	conn, err := grpc.Dial(grpcAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		t.Fatalf("grpc dial failed: %v", err)
-	}
+	conn := dialProfileGRPC(t, grpcAddr)
 	defer conn.Close()
 	grpcClient := types.NewProfileServiceClient(conn)
 

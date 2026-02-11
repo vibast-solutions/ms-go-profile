@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -42,6 +43,10 @@ func newHTTPClient(baseURL string) *httpClient {
 }
 
 func (c *httpClient) doJSON(t *testing.T, method, path string, body any) (*http.Response, []byte) {
+	return c.doJSONWithAPIKey(t, method, path, body, profileCallerAPIKey())
+}
+
+func (c *httpClient) doJSONWithAPIKey(t *testing.T, method, path string, body any, apiKey string) (*http.Response, []byte) {
 	t.Helper()
 
 	var reqBody *bytes.Reader
@@ -61,6 +66,9 @@ func (c *httpClient) doJSON(t *testing.T, method, path string, body any) (*http.
 	}
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
+	}
+	if apiKey != "" {
+		req.Header.Set("X-API-Key", apiKey)
 	}
 
 	resp, err := c.client.Do(req)
@@ -82,6 +90,7 @@ func waitForHTTP(baseURL string, timeout time.Duration) error {
 	client := &http.Client{Timeout: 2 * time.Second}
 	for time.Now().Before(deadline) {
 		req, _ := http.NewRequest(http.MethodGet, baseURL+"/health", nil)
+		req.Header.Set("X-API-Key", profileCallerAPIKey())
 		resp, err := client.Do(req)
 		if err == nil {
 			resp.Body.Close()
@@ -93,6 +102,42 @@ func waitForHTTP(baseURL string, timeout time.Duration) error {
 	}
 
 	return fmt.Errorf("http service not ready at %s", baseURL)
+}
+
+func withGRPCAPIKey() grpc.DialOption {
+	return grpc.WithUnaryInterceptor(func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		ctx = metadata.AppendToOutgoingContext(ctx, "x-api-key", profileCallerAPIKey())
+		return invoker(ctx, method, req, reply, cc, opts...)
+	})
+}
+
+func dialProfileGRPC(t *testing.T, addr string) *grpc.ClientConn {
+	t.Helper()
+
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()), withGRPCAPIKey())
+	if err != nil {
+		t.Fatalf("grpc dial failed: %v", err)
+	}
+
+	return conn
+}
+
+func dialProfileGRPCRaw(t *testing.T, addr string) *grpc.ClientConn {
+	t.Helper()
+
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		t.Fatalf("grpc dial failed: %v", err)
+	}
+
+	return conn
+}
+
+func grpcContextWithAPIKey(apiKey string) context.Context {
+	if apiKey == "" {
+		return context.Background()
+	}
+	return metadata.AppendToOutgoingContext(context.Background(), "x-api-key", apiKey)
 }
 
 func waitForGRPC(addr string, timeout time.Duration) error {
@@ -128,12 +173,13 @@ func TestProfileE2E_CrossTransportCRUD(t *testing.T) {
 
 	httpClient := newHTTPClient(httpBase)
 
-	conn, err := grpc.Dial(grpcAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		t.Fatalf("grpc dial failed: %v", err)
-	}
+	conn := dialProfileGRPC(t, grpcAddr)
 	defer conn.Close()
 	grpcClient := types.NewProfileServiceClient(conn)
+
+	rawConn := dialProfileGRPCRaw(t, grpcAddr)
+	defer rawConn.Close()
+	rawGRPCClient := types.NewProfileServiceClient(rawConn)
 
 	state := struct {
 		profile  *types.ProfileResponse
@@ -146,6 +192,34 @@ func TestProfileE2E_CrossTransportCRUD(t *testing.T) {
 		emailV1: fmt.Sprintf("profile-e2e-%d@example.com", time.Now().UnixNano()),
 	}
 	state.emailV2 = "updated-" + state.emailV1
+
+	t.Run("HTTPUnauthorizedMissingAPIKey", func(t *testing.T) {
+		resp, _ := httpClient.doJSONWithAPIKey(t, http.MethodGet, "/health", nil, "")
+		if resp.StatusCode != http.StatusUnauthorized {
+			t.Fatalf("expected 401 for missing x-api-key, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("HTTPForbiddenInsufficientAccess", func(t *testing.T) {
+		resp, _ := httpClient.doJSONWithAPIKey(t, http.MethodGet, "/health", nil, profileNoAccessAPIKey())
+		if resp.StatusCode != http.StatusForbidden {
+			t.Fatalf("expected 403 for insufficient access, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("GRPCUnauthorizedMissingAPIKey", func(t *testing.T) {
+		_, err := rawGRPCClient.GetProfile(context.Background(), &types.GetProfileRequest{Id: 1})
+		if status.Code(err) != codes.Unauthenticated {
+			t.Fatalf("expected Unauthenticated, got %v", err)
+		}
+	})
+
+	t.Run("GRPCForbiddenInsufficientAccess", func(t *testing.T) {
+		_, err := rawGRPCClient.GetProfile(grpcContextWithAPIKey(profileNoAccessAPIKey()), &types.GetProfileRequest{Id: 1})
+		if status.Code(err) != codes.PermissionDenied {
+			t.Fatalf("expected PermissionDenied, got %v", err)
+		}
+	})
 
 	t.Run("HTTPValidationCreate", func(t *testing.T) {
 		resp, _ := httpClient.doJSON(t, http.MethodPost, "/profiles", map[string]any{})

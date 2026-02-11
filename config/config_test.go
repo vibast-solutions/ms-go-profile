@@ -24,6 +24,8 @@ func TestLoadDefaults(t *testing.T) {
 	t.Setenv("MYSQL_MAX_IDLE_CONNS", "")
 	t.Setenv("MYSQL_CONN_MAX_LIFETIME_MINUTES", "")
 	t.Setenv("LOG_LEVEL", "")
+	t.Setenv("AUTH_SERVICE_GRPC_ADDR", "")
+	t.Setenv("APP_SERVICE_NAME", "")
 
 	cfg, err := Load()
 	if err != nil {
@@ -45,6 +47,12 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.LogLevel != "info" {
 		t.Fatalf("expected LOG_LEVEL default 'info', got %q", cfg.LogLevel)
 	}
+	if cfg.AuthServiceGRPCAddr != "localhost:9090" {
+		t.Fatalf("expected AUTH_SERVICE_GRPC_ADDR default, got %q", cfg.AuthServiceGRPCAddr)
+	}
+	if cfg.AppServiceName != "profile-service" {
+		t.Fatalf("expected APP_SERVICE_NAME default, got %q", cfg.AppServiceName)
+	}
 }
 
 func TestLoadCustomValues(t *testing.T) {
@@ -57,6 +65,8 @@ func TestLoadCustomValues(t *testing.T) {
 	t.Setenv("MYSQL_MAX_IDLE_CONNS", "12")
 	t.Setenv("MYSQL_CONN_MAX_LIFETIME_MINUTES", "17")
 	t.Setenv("LOG_LEVEL", "debug")
+	t.Setenv("AUTH_SERVICE_GRPC_ADDR", "auth:9090")
+	t.Setenv("APP_SERVICE_NAME", "profile-service")
 
 	cfg, err := Load()
 	if err != nil {
@@ -77,6 +87,12 @@ func TestLoadCustomValues(t *testing.T) {
 	}
 	if cfg.LogLevel != "debug" {
 		t.Fatalf("unexpected LOG_LEVEL: %q", cfg.LogLevel)
+	}
+	if cfg.AuthServiceGRPCAddr != "auth:9090" {
+		t.Fatalf("unexpected AUTH_SERVICE_GRPC_ADDR: %q", cfg.AuthServiceGRPCAddr)
+	}
+	if cfg.AppServiceName != "profile-service" {
+		t.Fatalf("unexpected APP_SERVICE_NAME: %q", cfg.AppServiceName)
 	}
 }
 

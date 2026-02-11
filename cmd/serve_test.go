@@ -8,6 +8,9 @@ import (
 	"testing"
 
 	"github.com/labstack/echo/v4"
+	authclient "github.com/vibast-solutions/lib-go-auth/client"
+	authmiddleware "github.com/vibast-solutions/lib-go-auth/middleware"
+	authservice "github.com/vibast-solutions/lib-go-auth/service"
 	"github.com/vibast-solutions/ms-go-profile/app/controller"
 	"github.com/vibast-solutions/ms-go-profile/app/entity"
 	"github.com/vibast-solutions/ms-go-profile/app/service"
@@ -53,6 +56,30 @@ func (cmdCompanyRepoStub) List(context.Context, uint64, string, uint32, uint32) 
 	return nil, 0, nil
 }
 
+type internalAuthClientStub struct{}
+
+func (internalAuthClientStub) ValidateInternalAccess(_ context.Context, req authclient.InternalAccessRequest) (authclient.InternalAccessResponse, error) {
+	switch req.APIKey {
+	case "valid-key":
+		return authclient.InternalAccessResponse{
+			ServiceName:   "caller-service",
+			AllowedAccess: []string{"profile-service"},
+		}, nil
+	case "no-access-key":
+		return authclient.InternalAccessResponse{
+			ServiceName:   "caller-service",
+			AllowedAccess: []string{"notifications-service"},
+		}, nil
+	default:
+		return authclient.InternalAccessResponse{}, &authclient.APIError{StatusCode: http.StatusUnauthorized}
+	}
+}
+
+func newInternalAuthMiddlewareStub() *authmiddleware.EchoInternalAuthMiddleware {
+	internalAuth := authservice.NewInternalAuthService(internalAuthClientStub{})
+	return authmiddleware.NewEchoInternalAuthMiddleware(internalAuth)
+}
+
 func TestSetupHTTPServerHealthRoute(t *testing.T) {
 	profileSvc := service.NewProfileService(cmdRepoStub{})
 	profileCtrl := controller.NewProfileController(profileSvc)
@@ -62,9 +89,54 @@ func TestSetupHTTPServerHealthRoute(t *testing.T) {
 	addressCtrl := controller.NewAddressController(addressSvc)
 	companySvc := service.NewCompanyService(cmdCompanyRepoStub{})
 	companyCtrl := controller.NewCompanyController(companySvc)
-	e := setupHTTPServer(profileCtrl, contactCtrl, addressCtrl, companyCtrl)
+	internalAuthMW := newInternalAuthMiddlewareStub()
+	e := setupHTTPServer(profileCtrl, contactCtrl, addressCtrl, companyCtrl, internalAuthMW, "profile-service")
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected status 401, got %d", rec.Code)
+	}
+}
+
+func TestSetupHTTPServerHealthRouteForbidden(t *testing.T) {
+	profileSvc := service.NewProfileService(cmdRepoStub{})
+	profileCtrl := controller.NewProfileController(profileSvc)
+	contactSvc := service.NewContactService(cmdContactRepoStub{})
+	contactCtrl := controller.NewContactController(contactSvc)
+	addressSvc := service.NewAddressService(cmdAddressRepoStub{})
+	addressCtrl := controller.NewAddressController(addressSvc)
+	companySvc := service.NewCompanyService(cmdCompanyRepoStub{})
+	companyCtrl := controller.NewCompanyController(companySvc)
+	internalAuthMW := newInternalAuthMiddlewareStub()
+	e := setupHTTPServer(profileCtrl, contactCtrl, addressCtrl, companyCtrl, internalAuthMW, "profile-service")
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	req.Header.Set("X-API-Key", "no-access-key")
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected status 403, got %d", rec.Code)
+	}
+}
+
+func TestSetupHTTPServerHealthRouteAuthorized(t *testing.T) {
+	profileSvc := service.NewProfileService(cmdRepoStub{})
+	profileCtrl := controller.NewProfileController(profileSvc)
+	contactSvc := service.NewContactService(cmdContactRepoStub{})
+	contactCtrl := controller.NewContactController(contactSvc)
+	addressSvc := service.NewAddressService(cmdAddressRepoStub{})
+	addressCtrl := controller.NewAddressController(addressSvc)
+	companySvc := service.NewCompanyService(cmdCompanyRepoStub{})
+	companyCtrl := controller.NewCompanyController(companySvc)
+	internalAuthMW := newInternalAuthMiddlewareStub()
+	e := setupHTTPServer(profileCtrl, contactCtrl, addressCtrl, companyCtrl, internalAuthMW, "profile-service")
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	req.Header.Set("X-API-Key", "valid-key")
 	rec := httptest.NewRecorder()
 	e.ServeHTTP(rec, req)
 
