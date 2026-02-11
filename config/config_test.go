@@ -26,32 +26,36 @@ func TestLoadDefaults(t *testing.T) {
 	t.Setenv("LOG_LEVEL", "")
 	t.Setenv("AUTH_SERVICE_GRPC_ADDR", "")
 	t.Setenv("APP_SERVICE_NAME", "")
+	t.Setenv("APP_API_KEY", "")
 
 	cfg, err := Load()
 	if err != nil {
 		t.Fatalf("Load() returned error: %v", err)
 	}
 
-	if cfg.HTTPHost != "0.0.0.0" || cfg.HTTPPort != "8080" {
+	if cfg.HTTP.Host != "0.0.0.0" || cfg.HTTP.Port != "8080" {
 		t.Fatalf("unexpected HTTP defaults: %+v", cfg)
 	}
-	if cfg.GRPCHost != "0.0.0.0" || cfg.GRPCPort != "9090" {
+	if cfg.GRPC.Host != "0.0.0.0" || cfg.GRPC.Port != "9090" {
 		t.Fatalf("unexpected gRPC defaults: %+v", cfg)
 	}
-	if cfg.MySQLMaxOpen != 10 || cfg.MySQLMaxIdle != 5 {
+	if cfg.MySQL.MaxOpenConns != 10 || cfg.MySQL.MaxIdleConns != 5 {
 		t.Fatalf("unexpected MySQL pool defaults: %+v", cfg)
 	}
-	if cfg.MySQLMaxLife != 30*time.Minute {
-		t.Fatalf("unexpected MySQL max life default: %v", cfg.MySQLMaxLife)
+	if cfg.MySQL.ConnMaxLifetime != 30*time.Minute {
+		t.Fatalf("unexpected MySQL max life default: %v", cfg.MySQL.ConnMaxLifetime)
 	}
-	if cfg.LogLevel != "info" {
-		t.Fatalf("expected LOG_LEVEL default 'info', got %q", cfg.LogLevel)
+	if cfg.Log.Level != "info" {
+		t.Fatalf("expected LOG_LEVEL default 'info', got %q", cfg.Log.Level)
 	}
-	if cfg.AuthServiceGRPCAddr != "localhost:9090" {
-		t.Fatalf("expected AUTH_SERVICE_GRPC_ADDR default, got %q", cfg.AuthServiceGRPCAddr)
+	if cfg.InternalEndpoints.AuthGRPCAddr != "localhost:9090" {
+		t.Fatalf("expected AUTH_SERVICE_GRPC_ADDR default, got %q", cfg.InternalEndpoints.AuthGRPCAddr)
 	}
-	if cfg.AppServiceName != "profile-service" {
-		t.Fatalf("expected APP_SERVICE_NAME default, got %q", cfg.AppServiceName)
+	if cfg.App.ServiceName != "profile-service" {
+		t.Fatalf("expected APP_SERVICE_NAME default, got %q", cfg.App.ServiceName)
+	}
+	if cfg.App.APIKey != "" {
+		t.Fatalf("expected APP_API_KEY default empty, got %q", cfg.App.APIKey)
 	}
 }
 
@@ -67,32 +71,36 @@ func TestLoadCustomValues(t *testing.T) {
 	t.Setenv("LOG_LEVEL", "debug")
 	t.Setenv("AUTH_SERVICE_GRPC_ADDR", "auth:9090")
 	t.Setenv("APP_SERVICE_NAME", "profile-service")
+	t.Setenv("APP_API_KEY", "profile-key")
 
 	cfg, err := Load()
 	if err != nil {
 		t.Fatalf("Load() returned error: %v", err)
 	}
 
-	if cfg.HTTPHost != "127.0.0.1" || cfg.HTTPPort != "8081" {
+	if cfg.HTTP.Host != "127.0.0.1" || cfg.HTTP.Port != "8081" {
 		t.Fatalf("unexpected HTTP config: %+v", cfg)
 	}
-	if cfg.GRPCHost != "127.0.0.2" || cfg.GRPCPort != "9091" {
+	if cfg.GRPC.Host != "127.0.0.2" || cfg.GRPC.Port != "9091" {
 		t.Fatalf("unexpected gRPC config: %+v", cfg)
 	}
-	if cfg.MySQLMaxOpen != 42 || cfg.MySQLMaxIdle != 12 {
+	if cfg.MySQL.MaxOpenConns != 42 || cfg.MySQL.MaxIdleConns != 12 {
 		t.Fatalf("unexpected MySQL pool config: %+v", cfg)
 	}
-	if cfg.MySQLMaxLife != 17*time.Minute {
-		t.Fatalf("unexpected MySQL max life: %v", cfg.MySQLMaxLife)
+	if cfg.MySQL.ConnMaxLifetime != 17*time.Minute {
+		t.Fatalf("unexpected MySQL max life: %v", cfg.MySQL.ConnMaxLifetime)
 	}
-	if cfg.LogLevel != "debug" {
-		t.Fatalf("unexpected LOG_LEVEL: %q", cfg.LogLevel)
+	if cfg.Log.Level != "debug" {
+		t.Fatalf("unexpected LOG_LEVEL: %q", cfg.Log.Level)
 	}
-	if cfg.AuthServiceGRPCAddr != "auth:9090" {
-		t.Fatalf("unexpected AUTH_SERVICE_GRPC_ADDR: %q", cfg.AuthServiceGRPCAddr)
+	if cfg.InternalEndpoints.AuthGRPCAddr != "auth:9090" {
+		t.Fatalf("unexpected AUTH_SERVICE_GRPC_ADDR: %q", cfg.InternalEndpoints.AuthGRPCAddr)
 	}
-	if cfg.AppServiceName != "profile-service" {
-		t.Fatalf("unexpected APP_SERVICE_NAME: %q", cfg.AppServiceName)
+	if cfg.App.ServiceName != "profile-service" {
+		t.Fatalf("unexpected APP_SERVICE_NAME: %q", cfg.App.ServiceName)
+	}
+	if cfg.App.APIKey != "profile-key" {
+		t.Fatalf("unexpected APP_API_KEY: %q", cfg.App.APIKey)
 	}
 }
 

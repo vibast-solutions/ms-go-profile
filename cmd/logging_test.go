@@ -15,7 +15,7 @@ func TestConfigureLoggingValidLevel(t *testing.T) {
 		logrus.SetFormatter(previousFormatter)
 	})
 
-	err := configureLogging(&config.Config{LogLevel: "debug"})
+	err := configureLogging(&config.Config{Log: config.LogConfig{Level: "debug"}})
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}
@@ -25,7 +25,7 @@ func TestConfigureLoggingValidLevel(t *testing.T) {
 }
 
 func TestConfigureLoggingInvalidLevel(t *testing.T) {
-	err := configureLogging(&config.Config{LogLevel: "definitely-not-a-level"})
+	err := configureLogging(&config.Config{Log: config.LogConfig{Level: "definitely-not-a-level"}})
 	if err == nil {
 		t.Fatal("expected error for invalid log level")
 	}
