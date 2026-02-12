@@ -28,10 +28,6 @@ func NewProfileRepository(db DBTX) *ProfileRepository {
 	return &ProfileRepository{db: db}
 }
 
-func (r *ProfileRepository) WithTx(tx *sql.Tx) *ProfileRepository {
-	return &ProfileRepository{db: tx}
-}
-
 func (r *ProfileRepository) Create(ctx context.Context, profile *entity.Profile) error {
 	query := `
 		INSERT INTO profile (user_id, email, created_at, updated_at)

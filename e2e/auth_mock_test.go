@@ -22,7 +22,7 @@ const (
 	defaultProfileCallerAPIKey   = "profile-caller-key"
 	defaultProfileNoAccessAPIKey = "profile-no-access-key"
 	defaultProfileAppAPIKey      = "profile-app-api-key"
-	profileAuthMockAddr          = "127.0.0.1:38081"
+	profileAuthMockAddr          = "0.0.0.0:38081"
 )
 
 func profileCallerAPIKey() string {
